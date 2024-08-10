@@ -6,7 +6,7 @@ export const useAuthStore = defineStore({
   id: 'auth',
   state: () => ({
     // initialize state from local storage to enable user to stay logged in
-    user: process.client ? AuthService.getUserFromLocalStorage() : null,
+    user: process.client ? AuthService.getUserFromCookie() : null,
     loading: false,
     returnUrl: null,
   }),
@@ -29,13 +29,13 @@ export const useAuthStore = defineStore({
       try {
         // <-- call service -->
         const response = await AuthService.signIn(data);
-        const user = response.data.user;
+        const user = response.data;
 
         // update state
         this.user = user;
 
-        // store user details and jwt in local storage to keep user logged in between page refreshes and set auth headers token
-        AuthService.saveUserToLocalStorage(this.user, response.data.token, rememberMe);
+        // store user details and jwt to nuxt cookie to keep user logged in between page refreshes and set auth headers token
+        AuthService.saveUserToCookie(user, rememberMe);
       } catch (error) {
         throw error;
       } finally {
@@ -48,8 +48,7 @@ export const useAuthStore = defineStore({
       //   }
 
       this.user = null;
-      AuthService.removeUserFromLocalStorage();
-      //   router.push('/auth/login');
+      AuthService.removeUserFromCookie();
     },
   },
 });

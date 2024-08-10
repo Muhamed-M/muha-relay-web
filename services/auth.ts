@@ -14,43 +14,44 @@ class AuthService {
     return response.data;
   }
 
-  // Save user and token to local storage
-  saveUserToLocalStorage(user: User, token: string, rememberMe: boolean) {
+  // Save user and token to cookie
+  saveUserToCookie(user: User, rememberMe: boolean): void {
     const now = Date.now();
+    const userCookie = useCookie('user');
+
     const userData = {
       ...user,
       expiresOn: now + 1000 * 60 * 60 * 24 * 7, // 7 days expiry for the session
-      token,
     };
+
     if (rememberMe) {
-      localStorage.setItem('user', JSON.stringify(userData));
+      userCookie.value = JSON.stringify(userData);
     }
-    this.setAuthHeader(token);
+
+    // set token in axios headers
+    this.setAuthHeader(user.token);
   }
 
-  // Retrieve user from local storage
-  getUserFromLocalStorage() {
-    const userData = localStorage.getItem('user');
-    if (!userData) return null;
+  // Retrieve user from cookie
+  getUserFromCookie(): User | null {
+    const userCookie = useCookie('user') as { value: User | null };
+    if (!userCookie.value) return null;
 
-    try {
-      const user = JSON.parse(userData);
-      this.setAuthHeader(user?.token);
-      return user;
-    } catch (error) {
-      console.error('Error parsing user data from local storage', error);
-      return null;
-    }
+    const user = userCookie.value;
+    this.setAuthHeader(user?.token);
+    return user;
   }
 
-  // Remove user from local storage
-  removeUserFromLocalStorage() {
-    localStorage.removeItem('user');
+  // Remove user from cookie
+  removeUserFromCookie(): void {
+    const userCookie = useCookie('user');
+    userCookie.value = null;
+
     this.setAuthHeader('');
   }
 
   // Set the Authorization header for axios
-  setAuthHeader(token: string) {
+  setAuthHeader(token: string): void {
     if (token) {
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     } else {
@@ -65,11 +66,11 @@ class AuthService {
   }
 
   // Handle session expiry
-  handleSessionExpiry() {
-    const user = this.getUserFromLocalStorage();
+  handleSessionExpiry(): void {
+    const user = this.getUserFromCookie();
 
     if (user && !this.isSessionActive(user)) {
-      this.removeUserFromLocalStorage();
+      this.removeUserFromCookie();
     }
   }
 }
