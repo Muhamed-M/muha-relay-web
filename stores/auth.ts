@@ -36,12 +36,6 @@ export const useAuthStore = defineStore({
 
         // store user details and jwt in local storage to keep user logged in between page refreshes and set auth headers token
         AuthService.saveUserToLocalStorage(this.user, response.data.token, rememberMe);
-        // redirect to overview page after successfull registration
-        // router.push(
-        //   this.user.role === 'admin' || this.user.role === 'admin-viewer' || this.user.role === 'admin-editor'
-        //     ? '/admin'
-        //     : '/'
-        // );
       } catch (error) {
         throw error;
       } finally {

@@ -16,7 +16,8 @@ export interface User {
   username: string;
   email: string;
   firstName: string;
-  lastName: string;
+  lastName?: string;
+  phoneNumber?: string;
   token: string;
   expiresOn?: number;
   createdAt: string;
