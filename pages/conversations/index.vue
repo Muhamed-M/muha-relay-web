@@ -16,11 +16,99 @@ const conversations = [
     lastMessageTime: '10:05 AM',
     unreadMessages: 0,
   },
+  {
+    id: 2,
+    image: 'https://avatars.githubusercontent.com/u/739984?v=4',
+    name: 'Jane Stone',
+    lastMessage: 'I am good, thank you!',
+    lastMessageTime: '10:05 AM',
+    unreadMessages: 0,
+  },
+  {
+    id: 2,
+    image: 'https://avatars.githubusercontent.com/u/739984?v=4',
+    name: 'Jane Stone',
+    lastMessage: 'I am good, thank you!',
+    lastMessageTime: '10:05 AM',
+    unreadMessages: 0,
+  },
+  {
+    id: 2,
+    image: 'https://avatars.githubusercontent.com/u/739984?v=4',
+    name: 'Jane Stone',
+    lastMessage: 'I am good, thank you!',
+    lastMessageTime: '10:05 AM',
+    unreadMessages: 0,
+  },
+  {
+    id: 2,
+    image: 'https://avatars.githubusercontent.com/u/739984?v=4',
+    name: 'Jane Stone',
+    lastMessage: 'I am good, thank you!',
+    lastMessageTime: '10:05 AM',
+    unreadMessages: 0,
+  },
+  {
+    id: 2,
+    image: 'https://avatars.githubusercontent.com/u/739984?v=4',
+    name: 'Jane Stone',
+    lastMessage: 'I am good, thank you!',
+    lastMessageTime: '10:05 AM',
+    unreadMessages: 0,
+  },
+  {
+    id: 2,
+    image: 'https://avatars.githubusercontent.com/u/739984?v=4',
+    name: 'Jane Stone',
+    lastMessage: 'I am good, thank you!',
+    lastMessageTime: '10:05 AM',
+    unreadMessages: 0,
+  },
+  {
+    id: 2,
+    image: 'https://avatars.githubusercontent.com/u/739984?v=4',
+    name: 'Jane Stone',
+    lastMessage: 'I am good, thank you!',
+    lastMessageTime: '10:05 AM',
+    unreadMessages: 0,
+  },
+  {
+    id: 2,
+    image: 'https://avatars.githubusercontent.com/u/739984?v=4',
+    name: 'Jane Stone',
+    lastMessage: 'I am good, thank you!',
+    lastMessageTime: '10:05 AM',
+    unreadMessages: 0,
+  },
+  {
+    id: 2,
+    image: 'https://avatars.githubusercontent.com/u/739984?v=4',
+    name: 'Jane Stone',
+    lastMessage: 'I am good, thank you!',
+    lastMessageTime: '10:05 AM',
+    unreadMessages: 0,
+  },
+  {
+    id: 2,
+    image: 'https://avatars.githubusercontent.com/u/739984?v=4',
+    name: 'Jane Stone',
+    lastMessage: 'I am good, thank you!',
+    lastMessageTime: '10:05 AM',
+    unreadMessages: 0,
+  },
+  {
+    id: 2,
+    image: 'https://avatars.githubusercontent.com/u/739984?v=4',
+    name: 'Jadlfjadklfja',
+    lastMessage: 'I am gooadfsd, thank you!',
+    lastMessageTime: '10:05 AM',
+    unreadMessages: 0,
+  },
 ];
 </script>
 
 <template>
-  <ul>
+  <ul class="pb-20">
     <li v-for="conversation in conversations" :key="conversation.id">
       <NuxtLink :to="`/conversations/${conversation.id}`">
         <ConversationsItem :conversation="conversation" />

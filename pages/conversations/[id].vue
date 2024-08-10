@@ -102,6 +102,12 @@ const conversation = ref({
 const chatContainer = ref(null);
 const newMessage = ref('');
 
+onMounted(() => {
+  setTimeout(() => {
+    scrollToLastMessage();
+  }, 100);
+});
+
 const sendMessage = async () => {
   conversation.value.messages.push({
     id: conversation.value.messages.length + 1,
@@ -113,6 +119,10 @@ const sendMessage = async () => {
   newMessage.value = '';
 
   await nextTick();
+  scrollToLastMessage();
+};
+
+const scrollToLastMessage = () => {
   const lastMessage = chatContainer.value.lastElementChild;
   lastMessage.scrollIntoView({ behavior: 'smooth' });
 };
