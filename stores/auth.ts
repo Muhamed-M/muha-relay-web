@@ -6,7 +6,7 @@ export const useAuthStore = defineStore({
   id: 'auth',
   state: () => ({
     // initialize state from local storage to enable user to stay logged in
-    user: process.client ? AuthService.getUserFromCookie() : null,
+    user: AuthService.getUserFromCookie() || null,
     loading: false,
     returnUrl: null,
   }),
