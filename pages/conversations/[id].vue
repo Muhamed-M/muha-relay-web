@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import socket from '~/utils/websocket';
 const route = useRoute();
 const authStore = useAuthStore();
 const conversationId = ref(route.params.id);
@@ -32,6 +33,21 @@ onMounted(async () => {
   setTimeout(() => {
     scrollToLastMessage();
   }, 50);
+
+  socket.onmessage = async ({ data }) => {
+    const messageObj = JSON.parse(data);
+    // update state
+    conversation.value.messages.push({
+      id: messageObj.id,
+      content: messageObj.content,
+      createdAt: messageObj.createdAt,
+      senderId: messageObj.senderId,
+    });
+
+    // scroll to last message
+    await nextTick();
+    scrollToLastMessage();
+  };
 });
 
 const sendMessage = async () => {
@@ -51,6 +67,8 @@ const sendMessage = async () => {
       createdAt: data.createdAt,
       senderId: data.senderId,
     });
+
+    socket.send(JSON.stringify(data));
 
     // reset input
     newMessage.value = '';

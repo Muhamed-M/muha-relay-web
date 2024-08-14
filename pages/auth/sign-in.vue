@@ -39,7 +39,7 @@ async function signIn(event: FormSubmitEvent<Schema>) {
     <div class="p-5 border-2 rounded-md">
       <h2 class="mb-3 font-semibold text-xl">Sign In</h2>
       <UForm :schema="schema" :state="state" class="space-y-4" @submit="signIn">
-        <UFormGroup label="Username/Email" name="username">
+        <UFormGroup label="Username/Email" name="identifier">
           <UInput v-model="state.identifier" placeholder="Your username/email" size="md" class="w-80" />
         </UFormGroup>
 
