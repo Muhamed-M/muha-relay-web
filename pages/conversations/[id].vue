@@ -37,6 +37,8 @@ onMounted(async () => {
 
   if (!socket) return;
 
+  socket.send(JSON.stringify({ type: 'join', conversationId: conversationId.value }));
+
   socket.onmessage = async ({ data }) => {
     const messageObj = JSON.parse(data);
     // update state
