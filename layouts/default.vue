@@ -27,7 +27,7 @@ const isOpen = ref(false);
       </NuxtLink>
     </div>
 
-    <ConversationsHandler v-model="isOpen" />
+    <ConversationsHandler v-model="isOpen" @close="isOpen = false" />
   </div>
 </template>
 

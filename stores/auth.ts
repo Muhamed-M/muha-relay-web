@@ -42,7 +42,7 @@ export const useAuthStore = defineStore({
         this.loading = false;
       }
     },
-    async logout() {
+    async signOut() {
       //   if (this.user.googleId) {
       //     await AuthService.googleLogout();
       //   }

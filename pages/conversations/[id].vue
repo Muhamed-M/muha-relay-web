@@ -1,21 +1,22 @@
 <script setup lang="ts">
 import { format, isSameMinute } from 'date-fns';
 import socket from '~/utils/websocket';
+import type { Conversation } from '~/types';
 const route = useRoute();
 const authStore = useAuthStore();
-const conversationId = ref(route.params.id);
 const user = authStore?.user;
 
 definePageMeta({
   layout: 'blank',
 });
 
+const conversationId = ref<number>(Number(route.params.id));
 const chatContainer = ref<HTMLElement | null>(null);
-const loading = ref(true);
-const conversation: any = ref();
-const newMessage = ref('');
+const loading = ref<boolean>(true);
+const conversation = ref<Conversation>();
+const newMessage = ref<string>('');
 
-const conversationTitle = computed(() => {
+const conversationTitle = computed<string>(() => {
   if (conversation.value?.name) {
     return conversation.value.name;
   }
@@ -42,12 +43,7 @@ onMounted(async () => {
   socket.onmessage = async ({ data }) => {
     const messageObj = JSON.parse(data);
     // update state
-    conversation.value.messages.push({
-      id: messageObj.id,
-      content: messageObj.content,
-      createdAt: messageObj.createdAt,
-      senderId: messageObj.senderId,
-    });
+    conversation.value?.messages?.push(messageObj);
 
     // scroll to last message
     await nextTick();
@@ -62,16 +58,11 @@ const sendMessage = async () => {
     const { data } = await axios.post('/messages', {
       content: newMessage.value,
       senderId: user?.id,
-      conversationId: conversation.value.id,
+      conversationId: conversation.value?.id,
     });
 
     // update state
-    conversation.value.messages.push({
-      id: data.id,
-      content: data.content,
-      createdAt: data.createdAt,
-      senderId: data.senderId,
-    });
+    conversation.value?.messages?.push(data);
 
     if (socket) socket.send(JSON.stringify(data));
 
@@ -116,7 +107,7 @@ const handleKeyDown = (event: KeyboardEvent) => {
   }
 };
 
-const displayTime = (createdAt: string) => {
+const displayTime = (createdAt: Date) => {
   const now = new Date();
 
   const displayTime = isSameMinute(new Date(createdAt), now) ? 'now' : format(new Date(createdAt), 'HH:mm');
@@ -143,7 +134,7 @@ const displayTime = (createdAt: string) => {
     </div>
 
     <div ref="chatContainer" class="mb-32 p-2">
-      <div v-if="!loading && conversation?.messages.length === 0" class="flex items-center justify-center mt-40">
+      <div v-if="!loading && conversation?.messages?.length === 0" class="flex items-center justify-center mt-40">
         <UIcon name="i-heroicons-chat-bubble-bottom-center-text" class="w-9 h-9 mr-3" />
         <h3 class="text-lg font-semibold">No Messages</h3>
       </div>
@@ -163,6 +154,9 @@ const displayTime = (createdAt: string) => {
         <!-- received messages conversation cloud -->
         <div v-else class="flex justify-start mb-3">
           <div class="max-w-80 bg-gray-200 py-2 px-4 rounded-lg rounded-bl-none">
+            <p v-if="conversation?.isGroup" class="text-primary">
+              {{ message?.sender?.username }}
+            </p>
             <p>
               {{ message.content }}
             </p>

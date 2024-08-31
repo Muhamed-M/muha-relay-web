@@ -8,7 +8,7 @@ class ConversationService {
     return data;
   }
 
-  async getConversations(userId: string | undefined) {
+  async getConversations(userId: number | undefined) {
     const { data } = await axios.get('/conversations', {
       params: {
         userId,

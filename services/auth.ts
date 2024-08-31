@@ -1,5 +1,5 @@
 import axios from '~/utils/axios';
-import type { User, SignUpPayload, SignInPayload } from '~/types/authTypes';
+import type { User, SignUpPayload, SignInPayload } from '~/types';
 
 class AuthService {
   // user registration API call

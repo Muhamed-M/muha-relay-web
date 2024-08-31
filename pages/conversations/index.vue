@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import ConversationService from '~/services/conversationService';
+import type { Conversation } from '~/types';
 const authStore = useAuthStore();
-const loading = ref(true);
-const conversations: any = ref([]);
+const loading = ref<boolean>(true);
+const conversations = ref<Conversation[]>([]);
 
 const fetchConversations = async () => {
   try {

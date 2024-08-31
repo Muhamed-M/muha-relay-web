@@ -3,6 +3,8 @@ import { z } from 'zod';
 import type { FormSubmitEvent } from '#ui/types';
 import ConversationService from '~/services/conversationService';
 
+const emit = defineEmits(['close']);
+
 const groupSchema = z.object({
   name: z.string().min(4, 'Must be at least 4 characters').max(30, 'Must be at most 30 characters'),
   users: z
@@ -27,7 +29,7 @@ const items = [
 
 const groupFormRef = ref();
 const groupForm = reactive({ name: '', users: [] });
-const chatForm = reactive({ user: null });
+const chatForm = reactive({ user: null as any });
 
 const createGroupConversation = async (form: FormSubmitEvent<Schema>) => {
   const usersIds = form.data.users.map((user) => user.id);
@@ -40,6 +42,9 @@ const createGroupConversation = async (form: FormSubmitEvent<Schema>) => {
 
   try {
     const result = await ConversationService.createConversation(groupPayload);
+
+    emit('close');
+    navigateTo(`/conversations/${result.data.id}`);
 
     useNuxtApp().$toast.success(result.message);
   } catch (error: any) {
@@ -56,12 +61,14 @@ const createConversation = async () => {
   const conversationPayload = {
     name: '',
     isGroup: false,
-    // @ts-ignore
     usersIds: [chatForm.user.id],
   };
 
   try {
     const result = await ConversationService.createConversation(conversationPayload);
+
+    emit('close');
+    navigateTo(`/conversations/${result.data.id}`);
 
     useNuxtApp().$toast.success(result.message);
   } catch (error: any) {
@@ -107,9 +114,13 @@ const createConversation = async () => {
           </div>
 
           <template #footer>
-            <UButton color="black" @click="item.key === 'group' ? groupFormRef.submit() : createConversation()">
-              Create {{ item.key === 'group' ? 'Group' : 'Chat' }}
-            </UButton>
+            <div class="flex justify-end">
+              <UButton variant="outline" color="black" class="mr-4" @click="emit('close')">Cancel</UButton>
+
+              <UButton color="black" @click="item.key === 'group' ? groupFormRef.submit() : createConversation()">
+                Create {{ item.key === 'group' ? 'Group' : 'Chat' }}
+              </UButton>
+            </div>
           </template>
         </UCard>
       </template>
