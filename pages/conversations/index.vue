@@ -1,17 +1,14 @@
 <script setup lang="ts">
+import ConversationService from '~/services/conversationService';
 const authStore = useAuthStore();
 const loading = ref(true);
 const conversations: any = ref([]);
 
 const fetchConversations = async () => {
   try {
-    const { data } = await axios.get('/conversations', {
-      params: {
-        userId: authStore?.user?.id,
-      },
-    });
+    const result = await ConversationService.getConversations(authStore?.user?.id);
 
-    conversations.value = data.data;
+    conversations.value = result;
   } catch (error) {
     console.error(error);
   } finally {

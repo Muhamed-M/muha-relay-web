@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { format, isSameMinute } from 'date-fns';
 import socket from '~/utils/websocket';
 const route = useRoute();
 const authStore = useAuthStore();
@@ -34,6 +35,8 @@ onMounted(async () => {
     scrollToLastMessage();
   }, 50);
 
+  if (!socket) return;
+
   socket.onmessage = async ({ data }) => {
     const messageObj = JSON.parse(data);
     // update state
@@ -68,7 +71,7 @@ const sendMessage = async () => {
       senderId: data.senderId,
     });
 
-    socket.send(JSON.stringify(data));
+    if (socket) socket.send(JSON.stringify(data));
 
     // reset input
     newMessage.value = '';
@@ -110,6 +113,14 @@ const handleKeyDown = (event: KeyboardEvent) => {
     sendMessage();
   }
 };
+
+const displayTime = (createdAt: string) => {
+  const now = new Date();
+
+  const displayTime = isSameMinute(new Date(createdAt), now) ? 'now' : format(new Date(createdAt), 'HH:mm');
+
+  return displayTime;
+};
 </script>
 
 <template>
@@ -131,20 +142,30 @@ const handleKeyDown = (event: KeyboardEvent) => {
 
     <div ref="chatContainer" class="mb-32 p-2">
       <div v-if="!loading && conversation?.messages.length === 0" class="flex items-center justify-center mt-40">
-        <UIcon name="i-heroicons-archive-box-x-mark" class="w-9 h-9 mr-3" />
-        <h3 class="text-lg font-semibold">No Active Conversations</h3>
+        <UIcon name="i-heroicons-chat-bubble-bottom-center-text" class="w-9 h-9 mr-3" />
+        <h3 class="text-lg font-semibold">No Messages</h3>
       </div>
 
+      <!-- loop over messages in conversation -->
       <template v-else v-for="message in conversation?.messages">
+        <!-- sent messages conversation cloud -->
         <div v-if="message.senderId === user?.id" class="flex justify-end mb-3">
-          <span class="max-w-80 bg-primary text-white p-3 rounded-lg">
-            {{ message.content }}
-          </span>
+          <div class="max-w-80 bg-primary text-white py-2 px-4 rounded-lg rounded-br-none">
+            <p>
+              {{ message.content }}
+            </p>
+            <p class="text-slate-200 text-sm text-right mt-2">{{ displayTime(message.createdAt) }}</p>
+          </div>
         </div>
+
+        <!-- received messages conversation cloud -->
         <div v-else class="flex justify-start mb-3">
-          <span class="max-w-80 bg-gray-200 p-3 rounded-lg">
-            {{ message.content }}
-          </span>
+          <div class="max-w-80 bg-gray-200 py-2 px-4 rounded-lg rounded-bl-none">
+            <p>
+              {{ message.content }}
+            </p>
+            <p class="text-slate-800 text-sm text-left mt-2">{{ displayTime(message.createdAt) }}</p>
+          </div>
         </div>
       </template>
     </div>

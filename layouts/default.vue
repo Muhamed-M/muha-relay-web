@@ -1,7 +1,12 @@
+<script setup lang="ts">
+const isOpen = ref(false);
+</script>
+
 <template>
   <div class="h-screen">
     <div class="sticky top-0 flex justify-between items-center px-4 py-2 shadow-md z-20 bg-white">
       <img src="/favicon.svg" alt="logo" width="50px" />
+      <h2 class="font-semibold text-lg">Conversations</h2>
       <UIcon name="i-mdi-magnify" class="w-9 h-9"></UIcon>
     </div>
 
@@ -13,7 +18,7 @@
       <NuxtLink to="/conversations">
         <UIcon name="i-ph-chat-thin" class="w-9 h-9"></UIcon>
       </NuxtLink>
-      <UButton :ui="{ rounded: 'rounded-full' }" size="xl" class="px-6">
+      <UButton :ui="{ rounded: 'rounded-full' }" size="xl" class="px-6" @click="isOpen = true">
         <UIcon name="i-ph-plus-light" class="w-5 h-5"></UIcon>
         New Chat
       </UButton>
@@ -21,6 +26,8 @@
         <UIcon name="i-ph-user-circle-thin" class="w-10 h-10"></UIcon>
       </NuxtLink>
     </div>
+
+    <ConversationsHandler v-model="isOpen" />
   </div>
 </template>
 
