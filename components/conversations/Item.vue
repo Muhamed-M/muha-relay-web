@@ -22,14 +22,7 @@ const conversationTitle = computed(() => {
 <template>
   <div class="flex justify-between items-center py-3 px-4">
     <div class="flex items-center">
-      <UAvatar
-        chip-color="green"
-        chip-position="top-right"
-        size="xl"
-        :src="conversation?.image"
-        alt="Avatar"
-        class="mr-3"
-      />
+      <UAvatar chip-color="green" chip-position="top-right" size="xl" :alt="conversationTitle" class="mr-3" />
       <div>
         <h3 class="text-lg font-semibold">{{ conversationTitle }}</h3>
         <p class="text-sm text-gray-500">{{ conversation?.lastMessage }}</p>

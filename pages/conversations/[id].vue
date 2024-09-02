@@ -117,8 +117,8 @@ const displayTime = (createdAt: Date) => {
 </script>
 
 <template>
-  <div class="min-h-screen">
-    <div class="flex shadow-md py-3 mb-3 sticky top-0 z-20 bg-white">
+  <div class="min-h-screen max-h-screen flex flex-col">
+    <div class="flex shadow-md py-3 min-h-20 bg-white">
       <NuxtLink to="/conversations">
         <UButton variant="ghost" size="md" class="mr-4">
           <template #leading>
@@ -133,7 +133,7 @@ const displayTime = (createdAt: Date) => {
       </div>
     </div>
 
-    <div ref="chatContainer" class="mb-32 p-2">
+    <div ref="chatContainer" class="flex-grow overflow-y-scroll py-4 px-2 space-y-3">
       <div v-if="!loading && conversation?.messages?.length === 0" class="flex items-center justify-center mt-40">
         <UIcon name="i-heroicons-chat-bubble-bottom-center-text" class="w-9 h-9 mr-3" />
         <h3 class="text-lg font-semibold">No Messages</h3>
@@ -142,7 +142,7 @@ const displayTime = (createdAt: Date) => {
       <!-- loop over messages in conversation -->
       <template v-else v-for="message in conversation?.messages">
         <!-- sent messages conversation cloud -->
-        <div v-if="message.senderId === user?.id" class="flex justify-end mb-3">
+        <div v-if="message.senderId === user?.id" class="flex justify-end">
           <div class="max-w-80 bg-primary text-white py-2 px-4 rounded-lg rounded-br-none">
             <p>
               {{ message.content }}
@@ -152,7 +152,8 @@ const displayTime = (createdAt: Date) => {
         </div>
 
         <!-- received messages conversation cloud -->
-        <div v-else class="flex justify-start mb-3">
+        <div v-else class="flex justify-start">
+          <UAvatar v-if="conversation?.isGroup" :alt="message?.sender?.username" size="sm" class="mr-2" />
           <div class="max-w-80 bg-gray-200 py-2 px-4 rounded-lg rounded-bl-none">
             <p v-if="conversation?.isGroup" class="text-primary">
               {{ message?.sender?.username }}
@@ -166,7 +167,7 @@ const displayTime = (createdAt: Date) => {
       </template>
     </div>
 
-    <div class="w-full fixed bottom-0 bg-white pb-2 px-2">
+    <div class="min-h-36 px-2">
       <div class="w-full bg-gray-200 rounded-lg px-4 py-4">
         <UTextarea
           v-model="newMessage"

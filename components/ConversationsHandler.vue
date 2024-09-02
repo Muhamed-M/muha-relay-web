@@ -43,7 +43,7 @@ const createGroupConversation = async (form: FormSubmitEvent<Schema>) => {
   try {
     const result = await ConversationService.createConversation(groupPayload);
 
-    emit('close');
+    resetState();
     navigateTo(`/conversations/${result.data.id}`);
 
     useNuxtApp().$toast.success(result.message);
@@ -67,7 +67,7 @@ const createConversation = async () => {
   try {
     const result = await ConversationService.createConversation(conversationPayload);
 
-    emit('close');
+    resetState();
     navigateTo(`/conversations/${result.data.id}`);
 
     useNuxtApp().$toast.success(result.message);
@@ -75,6 +75,13 @@ const createConversation = async () => {
     console.error(error);
     useNuxtApp().$toast.error(error.message);
   }
+};
+
+const resetState = () => {
+  emit('close');
+  groupForm.name = '';
+  groupForm.users = [];
+  chatForm.user = null;
 };
 </script>
 
@@ -115,7 +122,7 @@ const createConversation = async () => {
 
           <template #footer>
             <div class="flex justify-end">
-              <UButton variant="outline" color="black" class="mr-4" @click="emit('close')">Cancel</UButton>
+              <UButton variant="outline" color="black" class="mr-4" @click="resetState()">Cancel</UButton>
 
               <UButton color="black" @click="item.key === 'group' ? groupFormRef.submit() : createConversation()">
                 Create {{ item.key === 'group' ? 'Group' : 'Chat' }}

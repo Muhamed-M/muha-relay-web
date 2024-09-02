@@ -6,9 +6,9 @@ const groups = [
     key: 'users',
     label: (q: string) => q && `Users matching “${q}”...`,
     search: async (q: string) => {
-      if (!q || q.length < 2) {
-        return [];
-      }
+      // if (!q || q.length < 2) {
+      //   return [];
+      // }
 
       const users: any[] = await UserService.findUsersBySearch(q);
 
