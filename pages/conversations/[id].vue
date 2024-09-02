@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { format, isSameMinute } from 'date-fns';
+import { format, isSameMinute, isToday, isYesterday } from 'date-fns';
 import socket from '~/utils/websocket';
 import type { Conversation } from '~/types';
 const route = useRoute();
@@ -114,22 +114,52 @@ const displayTime = (createdAt: Date) => {
 
   return displayTime;
 };
+
+function isSameDay(date1: Date, date2: Date) {
+  return format(date1, 'yyyy-MM-dd') === format(date2, 'yyyy-MM-dd');
+}
+
+const shouldDisplayDate = (index: number) => {
+  if (!conversation.value || !conversation.value.messages) return false;
+
+  const currentMessageDate = new Date(conversation.value.messages[index].createdAt);
+  const previousMessageDate = index > 0 ? new Date(conversation.value.messages[index - 1]?.createdAt) : null;
+
+  if (index === 0) return true; // Always display date for the first message
+  return !previousMessageDate || !isSameDay(currentMessageDate, previousMessageDate);
+};
 </script>
 
 <template>
   <div class="min-h-screen max-h-screen flex flex-col">
-    <div class="flex shadow-md py-3 min-h-20 bg-white">
+    <div class="flex items-center gap-1 shadow-md py-3 min-h-20 bg-white">
       <NuxtLink to="/conversations">
-        <UButton variant="ghost" size="md" class="mr-4">
+        <UButton variant="ghost" size="md">
           <template #leading>
             <UIcon name="i-lets-icons-back-light" class="w-7 h-7"></UIcon>
           </template>
         </UButton>
       </NuxtLink>
 
-      <div>
-        <h4 class="text-lg font-semibold">{{ conversationTitle }}</h4>
-        <p class="text-sm text-gray-500">Online</p>
+      <div class="flex items-center gap-3">
+        <!-- loading -->
+        <template v-if="loading">
+          <div class="flex items-center space-x-4">
+            <USkeleton class="h-12 w-12" :ui="{ rounded: 'rounded-full' }" />
+            <div class="space-y-2">
+              <USkeleton class="h-4 w-[100px]" />
+              <USkeleton class="h-4 w-[80px]" />
+            </div>
+          </div>
+        </template>
+        <!-- content ready -->
+        <template v-else>
+          <UAvatar chip-color="green" chip-position="top-right" size="xl" :alt="conversationTitle" />
+          <div>
+            <h4 class="text-lg font-semibold">{{ conversationTitle }}</h4>
+            <p class="text-sm text-gray-500">Online</p>
+          </div>
+        </template>
       </div>
     </div>
 
@@ -140,7 +170,26 @@ const displayTime = (createdAt: Date) => {
       </div>
 
       <!-- loop over messages in conversation -->
-      <template v-else v-for="message in conversation?.messages">
+      <template v-else v-for="(message, index) in conversation?.messages">
+        <!-- display messages dates -->
+        <template v-if="shouldDisplayDate(index)">
+          <UDivider
+            v-if="isToday(message.createdAt)"
+            label="Today"
+            :ui="{ label: 'bg-gray-200 text-slate-800 py-1 px-2 rounded-lg' }"
+          />
+          <UDivider
+            v-else-if="isYesterday(message.createdAt)"
+            label="Yesterday"
+            :ui="{ label: 'bg-gray-200 text-slate-800 py-1 px-2 rounded-lg' }"
+          />
+          <UDivider
+            v-else
+            :label="format(new Date(message.createdAt), 'EEEE, dd MMMM yyyy')"
+            :ui="{ label: 'bg-gray-200 text-slate-800 py-1 px-2 rounded-lg' }"
+          />
+        </template>
+
         <!-- sent messages conversation cloud -->
         <div v-if="message.senderId === user?.id" class="flex justify-end">
           <div class="max-w-80 bg-primary text-white py-2 px-4 rounded-lg rounded-br-none">
@@ -180,8 +229,8 @@ const displayTime = (createdAt: Date) => {
 
         <div class="flex justify-between items-center">
           <div>
-            <UIcon name="i-iconamoon-attachment-thin" class="w-6 h-6 mr-3"></UIcon>
-            <UIcon name="i-ph-microphone-thin" class="w-6 h-6"></UIcon>
+            <!-- <UIcon name="i-iconamoon-attachment-thin" class="w-6 h-6 mr-3"></UIcon>
+            <UIcon name="i-ph-microphone-thin" class="w-6 h-6"></UIcon> -->
           </div>
           <UButton size="md" label="Send" @click="sendMessage">
             <template #trailing>
