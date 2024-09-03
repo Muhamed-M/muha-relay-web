@@ -28,7 +28,7 @@ const conversationTitle = computed(() => {
         <h3 class="text-lg font-semibold">{{ conversationTitle }}</h3>
         <p v-if="conversation?.messages[0]?.content" class="text-sm text-gray-500">
           <!-- @vue-ignore -->
-          {{ truncateText(conversation?.messages[0].content, 30) }}
+          {{ truncateText(conversation?.messages[0].content, 20) }}
         </p>
         <p v-else class="text-sm text-primary">New!</p>
       </div>

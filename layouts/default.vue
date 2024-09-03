@@ -4,10 +4,9 @@ const isOpen = ref(false);
 
 <template>
   <div class="h-screen">
-    <div class="sticky top-0 flex justify-between items-center px-4 py-2 shadow-md z-20 bg-white">
+    <div class="sticky top-0 flex items-center gap-4 px-4 py-2 shadow-md z-20 bg-white">
       <img src="/favicon.svg" alt="logo" width="50px" />
       <h2 class="font-semibold text-lg">Conversations</h2>
-      <UIcon name="i-mdi-magnify" class="w-9 h-9"></UIcon>
     </div>
 
     <main>

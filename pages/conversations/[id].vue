@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { format, isSameMinute, isToday, isYesterday } from 'date-fns';
 import socket from '~/utils/websocket';
-import type { Conversation } from '~/types';
+import type { Conversation, Message } from '~/types';
 const route = useRoute();
 const authStore = useAuthStore();
 const user = authStore?.user;
@@ -14,6 +14,7 @@ const conversationId = ref<number>(Number(route.params.id));
 const chatContainer = ref<HTMLElement | null>(null);
 const loading = ref<boolean>(true);
 const conversation = ref<Conversation>();
+const messages = ref<Message[]>([]);
 const newMessage = ref<string>('');
 
 const conversationTitle = computed<string>(() => {
@@ -30,6 +31,7 @@ const conversationTitle = computed<string>(() => {
 });
 
 onMounted(async () => {
+  await getConversation();
   await getMessages();
 
   setTimeout(() => {
@@ -43,7 +45,7 @@ onMounted(async () => {
   socket.onmessage = async ({ data }) => {
     const messageObj = JSON.parse(data);
     // update state
-    conversation.value?.messages?.push(messageObj);
+    messages.value.push(messageObj);
 
     // scroll to last message
     await nextTick();
@@ -58,11 +60,11 @@ const sendMessage = async () => {
     const { data } = await axios.post('/messages', {
       content: newMessage.value,
       senderId: user?.id,
-      conversationId: conversation.value?.id,
+      conversationId: conversationId.value,
     });
 
     // update state
-    conversation.value?.messages?.push(data);
+    messages.value.push(data);
 
     if (socket) socket.send(JSON.stringify(data));
 
@@ -77,7 +79,7 @@ const sendMessage = async () => {
   }
 };
 
-const getMessages = async () => {
+const getConversation = async () => {
   try {
     const { data } = await axios.get(`/conversations/${conversationId.value}`, {
       params: {
@@ -93,11 +95,51 @@ const getMessages = async () => {
   }
 };
 
+const getMessages = async (cursor: number | null = null) => {
+  if (loading.value) return;
+
+  loading.value = true;
+
+  const scrollHeightBefore = chatContainer.value?.scrollHeight || 0;
+  const scrollTopBefore = chatContainer.value?.scrollTop || 0;
+
+  try {
+    const { data } = await axios.get('/messages', {
+      params: {
+        conversationId: conversationId.value,
+        cursor,
+      },
+    });
+
+    messages.value = [...data, ...messages.value];
+
+    // Wait for the DOM to update
+    await nextTick();
+
+    // Maintain scroll position after loading older messages
+    if (chatContainer.value && data.length > 0 && cursor) {
+      const scrollHeightAfter = chatContainer.value.scrollHeight;
+      chatContainer.value.scrollTop = scrollHeightAfter - scrollHeightBefore + scrollTopBefore;
+    }
+  } catch (error) {
+    console.error(error);
+  } finally {
+    loading.value = false;
+  }
+};
+
 const scrollToLastMessage = () => {
   if (!chatContainer.value) return;
 
   const lastMessage = chatContainer.value.lastElementChild;
   lastMessage?.scrollIntoView({ behavior: 'smooth' });
+};
+
+// function for scroll pagination
+const onScroll = async () => {
+  if (chatContainer.value && chatContainer.value.scrollTop === 0) {
+    await getMessages(messages.value[0]?.id);
+  }
 };
 
 const handleKeyDown = (event: KeyboardEvent) => {
@@ -120,10 +162,10 @@ function isSameDay(date1: Date, date2: Date) {
 }
 
 const shouldDisplayDate = (index: number) => {
-  if (!conversation.value || !conversation.value.messages) return false;
+  if (messages.value.length === 0) return false;
 
-  const currentMessageDate = new Date(conversation.value.messages[index].createdAt);
-  const previousMessageDate = index > 0 ? new Date(conversation.value.messages[index - 1]?.createdAt) : null;
+  const currentMessageDate = new Date(messages.value[index].createdAt);
+  const previousMessageDate = index > 0 ? new Date(messages.value[index - 1]?.createdAt) : null;
 
   if (index === 0) return true; // Always display date for the first message
   return !previousMessageDate || !isSameDay(currentMessageDate, previousMessageDate);
@@ -163,14 +205,14 @@ const shouldDisplayDate = (index: number) => {
       </div>
     </div>
 
-    <div ref="chatContainer" class="flex-grow overflow-y-scroll py-4 px-2 space-y-3">
-      <div v-if="!loading && conversation?.messages?.length === 0" class="flex items-center justify-center mt-40">
+    <div ref="chatContainer" class="flex-grow overflow-y-scroll py-4 px-2 space-y-3" @scroll="onScroll">
+      <div v-if="!loading && messages?.length === 0" class="flex items-center justify-center mt-40">
         <UIcon name="i-heroicons-chat-bubble-bottom-center-text" class="w-9 h-9 mr-3" />
         <h3 class="text-lg font-semibold">No Messages</h3>
       </div>
 
       <!-- loop over messages in conversation -->
-      <template v-else v-for="(message, index) in conversation?.messages">
+      <template v-else v-for="(message, index) in messages">
         <!-- display messages dates -->
         <template v-if="shouldDisplayDate(index)">
           <UDivider
