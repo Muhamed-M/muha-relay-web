@@ -2,9 +2,11 @@
 import { format, isSameMinute, isToday, isYesterday } from 'date-fns';
 import socket from '~/utils/websocket';
 import type { Conversation, Message } from '~/types';
+import { playIncomingMessageSound, playSentMessageSound } from '~/utils/sounds';
+import messageReceiptService from '~/services/messageReceiptService';
 const route = useRoute();
 const authStore = useAuthStore();
-const user = authStore?.user;
+const user = authStore.user;
 
 definePageMeta({
   layout: 'blank',
@@ -33,6 +35,7 @@ const conversationTitle = computed<string>(() => {
 onMounted(async () => {
   await getConversation();
   await getMessages();
+  markMessagesAsRead();
 
   setTimeout(() => {
     scrollToLastMessage();
@@ -46,6 +49,7 @@ onMounted(async () => {
     const messageObj = JSON.parse(data);
     // update state
     messages.value.push(messageObj);
+    playIncomingMessageSound();
 
     // scroll to last message
     await nextTick();
@@ -70,6 +74,8 @@ const sendMessage = async () => {
 
     // reset input
     newMessage.value = '';
+
+    playSentMessageSound();
 
     await nextTick();
     scrollToLastMessage();
@@ -125,6 +131,14 @@ const getMessages = async (cursor: number | null = null) => {
     console.error(error);
   } finally {
     loading.value = false;
+  }
+};
+
+const markMessagesAsRead = async () => {
+  try {
+    await messageReceiptService.markMessagesAsRead(conversationId.value, user?.id);
+  } catch (error) {
+    console.error(error);
   }
 };
 

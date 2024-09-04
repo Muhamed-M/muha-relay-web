@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { format } from 'date-fns';
+import { format, isToday, isYesterday } from 'date-fns';
 const authStore = useAuthStore();
 
 const props = defineProps({
@@ -18,6 +18,19 @@ const conversationTitle = computed(() => {
 
   return 'Unknown Conversation';
 });
+
+const formatDate = (date: Date) => {
+  const parsedDate = new Date(date);
+  if (isToday(parsedDate)) {
+    return format(parsedDate, 'HH:mm');
+  }
+
+  if (isYesterday(parsedDate)) {
+    return 'Yesterday';
+  }
+
+  return format(parsedDate, 'dd.MM.yyyy');
+};
 </script>
 
 <template>
@@ -26,22 +39,26 @@ const conversationTitle = computed(() => {
       <UAvatar chip-color="green" chip-position="top-right" size="xl" :alt="conversationTitle" class="mr-3" />
       <div>
         <h3 class="text-lg font-semibold">{{ conversationTitle }}</h3>
-        <p v-if="conversation?.messages[0]?.content" class="text-sm text-gray-500">
+        <p
+          v-if="conversation?.lastMessageContent"
+          class="text-sm"
+          :class="[conversation?._count?.messages ?? 0 > 0 ? 'text-black font-bold' : 'text-gray-500']"
+        >
           <!-- @vue-ignore -->
-          {{ truncateText(conversation?.messages[0].content, 20) }}
+          {{ truncateText(conversation?.lastMessageContent, 20) }}
         </p>
         <p v-else class="text-sm text-primary">New!</p>
       </div>
     </div>
     <div>
-      <p v-if="conversation?.messages[0]?.createdAt" class="text-sm text-gray-500">
-        {{ format(new Date(conversation?.messages[0]?.createdAt), 'dd.MM.yyyy') }}
+      <p v-if="conversation?.lastMessageAt" class="text-sm text-gray-500">
+        {{ formatDate(conversation?.lastMessageAt) }}
       </p>
       <div
-        v-if="conversation?.unreadMessages > 0"
+        v-if="conversation?._count.messages > 0"
         class="bg-primary text-white rounded-full w-6 h-6 flex justify-center items-center ms-auto mt-2"
       >
-        <p>{{ conversation?.unreadMessages }}</p>
+        <p>{{ conversation?._count.messages }}</p>
       </div>
     </div>
   </div>
