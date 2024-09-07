@@ -34,7 +34,10 @@ const formatDate = (date: Date) => {
 </script>
 
 <template>
-  <div class="flex justify-between items-center py-3 px-4">
+  <div
+    class="flex justify-between items-center py-3 px-4"
+    :class="[conversation?._count?.messages ?? 0 > 0 ? 'bg-primary-100' : '']"
+  >
     <div class="flex items-center">
       <UAvatar chip-color="green" chip-position="top-right" size="xl" :alt="conversationTitle" class="mr-3" />
       <div>

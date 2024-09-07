@@ -19,10 +19,15 @@ export interface Conversation {
   id: number;
   name?: string | null;
   isGroup: boolean;
+  lastMessageContent?: string | null; // Content of the last message sent
+  lastMessageAt?: Date | null; // Timestamp of when the last message was sent
   createdAt: Date;
   updatedAt: Date;
   messages?: Message[]; // Array of Message objects
   members?: ConversationMember[]; // Array of ConversationMember objects
+  _count?: {
+    messages: number;
+  }; // Conversation count object
 }
 
 export interface ConversationMember {

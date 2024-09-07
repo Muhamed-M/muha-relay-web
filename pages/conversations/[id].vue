@@ -57,6 +57,10 @@ onMounted(async () => {
   };
 });
 
+onBeforeUnmount(async () => {
+  markMessagesAsRead();
+});
+
 const sendMessage = async () => {
   if (!newMessage.value.trim()) return;
 
