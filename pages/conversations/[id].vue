@@ -54,11 +54,15 @@ onMounted(async () => {
     // scroll to last message
     await nextTick();
     scrollToLastMessage();
+    await markMessagesAsRead();
   };
 });
 
-onBeforeUnmount(async () => {
-  markMessagesAsRead();
+onBeforeUnmount(() => {
+  if (socket) {
+    socket.send(JSON.stringify({ type: 'left', conversationId: 0 }));
+    socket.onmessage = null;
+  }
 });
 
 const sendMessage = async () => {

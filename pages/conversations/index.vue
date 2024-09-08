@@ -3,6 +3,7 @@ import ConversationService from '~/services/conversationService';
 import type { Conversation } from '~/types';
 import socket from '~/utils/websocket';
 const authStore = useAuthStore();
+
 const loading = ref<boolean>(true);
 const conversations = ref<Conversation[]>([]);
 
@@ -46,6 +47,12 @@ onMounted(async () => {
       }
     }
   };
+});
+
+onBeforeUnmount(() => {
+  if (socket) {
+    socket.onmessage = null;
+  }
 });
 </script>
 
