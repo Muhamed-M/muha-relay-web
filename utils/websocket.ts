@@ -1,7 +1,7 @@
 let socket: WebSocket | null = null;
 
 if (process.client) {
-  socket = new WebSocket('ws://localhost:8080');
+  socket = new WebSocket('ws://192.168.1.6/api');
 
   socket.onopen = () => {
     console.log('Connected to WebSocket server');
