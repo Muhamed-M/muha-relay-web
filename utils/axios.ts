@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const axiosServices = axios.create({
-  baseURL: process.env.BACKEND_URL || 'http://localhost:4000/api',
+  baseURL: 'http://localhost:4000/api',
 });
 
 // interceptor for http

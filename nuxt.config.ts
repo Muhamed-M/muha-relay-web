@@ -12,8 +12,4 @@ export default defineNuxtConfig({
   colorMode: {
     preference: 'light',
   },
-  runtimeConfig: {
-    apiUrl: process.env.API_URL || 'http://localhost:4000/api',
-    socketServerUrl: process.env.SOCKET_SERVER_URL || 'ws://localhost:8080',
-  },
 });
