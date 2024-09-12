@@ -47,6 +47,7 @@ onMounted(async () => {
 
   socket.onmessage = async ({ data }) => {
     const messageObj = JSON.parse(data);
+    if (messageObj.type) return;
     // update state
     messages.value.push(messageObj);
     playIncomingMessageSound();
@@ -195,7 +196,7 @@ const shouldDisplayDate = (index: number) => {
 </script>
 
 <template>
-  <div class="min-h-screen max-h-screen flex flex-col">
+  <div class="h-screen max-h-screen flex flex-col">
     <div class="flex items-center gap-1 shadow-md py-3 min-h-20 bg-white">
       <NuxtLink to="/conversations">
         <UButton variant="ghost" size="md">
