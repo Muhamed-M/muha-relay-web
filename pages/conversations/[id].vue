@@ -6,18 +6,20 @@ import { playIncomingMessageSound, playSentMessageSound } from '~/utils/sounds';
 import messageReceiptService from '~/services/messageReceiptService';
 const route = useRoute();
 const authStore = useAuthStore();
+const conversationsStore = useConversationsStore();
 const user = authStore.user;
 
 definePageMeta({
   layout: 'blank',
 });
 
+const { loadingConversation, conversation } = storeToRefs(conversationsStore);
 const conversationId = ref<number>(Number(route.params.id));
 const chatContainer = ref<HTMLElement | null>(null);
 const loading = ref<boolean>(true);
-const conversation = ref<Conversation>();
 const messages = ref<Message[]>([]);
 const newMessage = ref<string>('');
+const isAsideExpanded = ref<boolean>(false);
 
 const conversationTitle = computed<string>(() => {
   if (conversation.value?.name) {
@@ -33,8 +35,8 @@ const conversationTitle = computed<string>(() => {
 });
 
 onMounted(async () => {
-  await getConversation();
-  await getMessages();
+  conversationsStore.getConversation(conversationId.value, user?.id);
+  getMessages();
   markMessagesAsRead();
 
   setTimeout(() => {
@@ -94,27 +96,7 @@ const sendMessage = async () => {
   }
 };
 
-const getConversation = async () => {
-  try {
-    const { data } = await axios.get(`/conversations/${conversationId.value}`, {
-      params: {
-        userId: user?.id,
-      },
-    });
-
-    conversation.value = data;
-  } catch (error) {
-    console.error(error);
-  } finally {
-    loading.value = false;
-  }
-};
-
 const getMessages = async (cursor: number | null = null) => {
-  if (loading.value) return;
-
-  loading.value = true;
-
   const scrollHeightBefore = chatContainer.value?.scrollHeight || 0;
   const scrollTopBefore = chatContainer.value?.scrollTop || 0;
 
@@ -160,7 +142,7 @@ const scrollToLastMessage = () => {
 
 // function for scroll pagination
 const onScroll = async () => {
-  if (chatContainer.value && chatContainer.value.scrollTop === 0) {
+  if (chatContainer.value && chatContainer.value.scrollTop === 0 && !loading.value) {
     await getMessages(messages.value[0]?.id);
   }
 };
@@ -197,35 +179,43 @@ const shouldDisplayDate = (index: number) => {
 
 <template>
   <div class="h-screen max-h-screen flex flex-col">
-    <div class="flex items-center gap-1 shadow-md py-3 min-h-20 bg-white">
-      <NuxtLink to="/conversations">
-        <UButton variant="ghost" size="md">
-          <template #leading>
-            <UIcon name="i-lets-icons-back-light" class="w-7 h-7"></UIcon>
-          </template>
-        </UButton>
-      </NuxtLink>
+    <div class="flex items-center justify-between shadow-md py-3 px-2 min-h-20 bg-white">
+      <div class="flex items-center gap-1">
+        <NuxtLink to="/conversations">
+          <UButton variant="ghost" size="md">
+            <template #leading>
+              <UIcon name="i-lets-icons-back-light" class="w-7 h-7"></UIcon>
+            </template>
+          </UButton>
+        </NuxtLink>
 
-      <div class="flex items-center gap-3">
-        <!-- loading -->
-        <template v-if="loading">
-          <div class="flex items-center space-x-4">
-            <USkeleton class="h-12 w-12" :ui="{ rounded: 'rounded-full' }" />
-            <div class="space-y-2">
-              <USkeleton class="h-4 w-[100px]" />
-              <USkeleton class="h-4 w-[80px]" />
+        <div class="flex items-center gap-3">
+          <!-- loading -->
+          <template v-if="loadingConversation">
+            <div class="flex items-center space-x-4">
+              <USkeleton class="h-12 w-12" :ui="{ rounded: 'rounded-full' }" />
+              <div class="space-y-2">
+                <USkeleton class="h-4 w-[100px]" />
+                <USkeleton class="h-4 w-[80px]" />
+              </div>
             </div>
-          </div>
-        </template>
-        <!-- content ready -->
-        <template v-else>
-          <UAvatar chip-color="green" chip-position="top-right" size="xl" :alt="conversationTitle" />
-          <div>
-            <h4 class="text-lg font-semibold">{{ conversationTitle }}</h4>
-            <p class="text-sm text-gray-500">Online</p>
-          </div>
-        </template>
+          </template>
+          <!-- content ready -->
+          <template v-else>
+            <UAvatar chip-color="green" chip-position="top-right" size="xl" :alt="conversationTitle" />
+            <div>
+              <h4 class="text-lg font-semibold">{{ conversationTitle }}</h4>
+              <p class="text-sm text-gray-500">Online</p>
+            </div>
+          </template>
+        </div>
       </div>
+
+      <UButton v-if="conversation?.isGroup" variant="ghost" size="md" @click="isAsideExpanded = true">
+        <template #leading>
+          <UIcon name="i-heroicons-ellipsis-vertical" class="w-7 h-7"></UIcon>
+        </template>
+      </UButton>
     </div>
 
     <div ref="chatContainer" class="flex-grow overflow-y-scroll py-4 px-2 space-y-3" @scroll="onScroll">
@@ -305,5 +295,11 @@ const shouldDisplayDate = (index: number) => {
         </div>
       </div>
     </div>
+
+    <ConversationsAside
+      v-if="!loadingConversation"
+      v-model="isAsideExpanded"
+      @close-chat-aside="isAsideExpanded = false"
+    />
   </div>
 </template>

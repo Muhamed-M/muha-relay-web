@@ -1,6 +1,13 @@
 <script setup lang="ts">
 import UserService from '~/services/userService';
 
+const props = defineProps({
+  exclude: {
+    type: Array,
+    default: () => [],
+  },
+});
+
 const groups = [
   {
     key: 'users',
@@ -10,7 +17,11 @@ const groups = [
       //   return [];
       // }
 
-      const users: any[] = await UserService.findUsersBySearch(q);
+      let users: any[] = await UserService.findUsersBySearch(q);
+
+      if (props.exclude.length > 0) {
+        users = users.filter((user) => !props.exclude.includes(user.id));
+      }
 
       return users.map((user) => ({ id: user.id, label: user.username, suffix: user.email }));
     },

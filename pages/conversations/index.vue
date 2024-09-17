@@ -1,26 +1,12 @@
 <script setup lang="ts">
-import ConversationService from '~/services/conversationService';
-import type { Conversation } from '~/types';
 import socket from '~/utils/websocket';
 const authStore = useAuthStore();
+const conversationsStore = useConversationsStore();
 
-const loading = ref<boolean>(true);
-const conversations = ref<Conversation[]>([]);
-
-const fetchConversations = async () => {
-  try {
-    const result = await ConversationService.getConversations(authStore?.user?.id);
-
-    conversations.value = result;
-  } catch (error) {
-    console.error(error);
-  } finally {
-    loading.value = false;
-  }
-};
+const { loading, conversations } = storeToRefs(conversationsStore);
 
 onMounted(async () => {
-  await fetchConversations();
+  await conversationsStore.fetchConversations(authStore?.user?.id);
 
   if (!socket) return;
 
@@ -28,7 +14,7 @@ onMounted(async () => {
     const messageObj = JSON.parse(data);
 
     // If the message is for a specific conversation update
-    if (messageObj.type === 'conversation-update') {
+    if (messageObj.type === 'conversation-update' && messageObj.senderId !== authStore?.user?.id) {
       // Update conversation list with the new message data
       const conversationIndex = conversations.value.findIndex((c) => c.id === messageObj.conversationId);
       if (conversationIndex !== -1) {
