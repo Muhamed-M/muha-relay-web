@@ -108,7 +108,7 @@ const resetState = () => {
               @submit="createGroupConversation"
             >
               <UFormGroup name="name">
-                <UInput v-model="groupForm.name" type="text" placeholder="Group Name"></UInput>
+                <UInput v-model="groupForm.name" size="xl" type="text" placeholder="Group Name"></UInput>
               </UFormGroup>
 
               <UFormGroup name="users">

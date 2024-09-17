@@ -48,29 +48,29 @@ async function signUp(event: FormSubmitEvent<Schema>) {
 
 <template>
   <div>
-    <img src="/images/muharelay-logo.svg" alt="logo" class="ms-auto me-auto mb-6" />
+    <img src="/images/muharelay-logo.svg" alt="logo" class="ms-auto me-auto my-6" />
 
     <div class="p-5 border-2 rounded-md">
       <h2 class="mb-3 font-semibold text-xl">Sign Up</h2>
       <UForm :schema="schema" :state="state" class="space-y-4" @submit="signUp">
         <UFormGroup label="First Name" name="firstName" required>
-          <UInput v-model="state.firstName" placeholder="Your first name" size="md" class="w-80" />
+          <UInput v-model="state.firstName" placeholder="Your first name" size="xl" class="w-80" />
         </UFormGroup>
 
         <!-- <UFormGroup label="Last Name" name="firstName">
-          <UInput v-model="state.lastName" placeholder="Your last name" size="md" class="w-80" />
+          <UInput v-model="state.lastName" placeholder="Your last name" size="xl" class="w-80" />
         </UFormGroup> -->
 
         <UFormGroup label="Username" name="username" required>
-          <UInput v-model="state.username" placeholder="Your username" size="md" class="w-80" />
+          <UInput v-model="state.username" placeholder="Your username" size="xl" class="w-80" />
         </UFormGroup>
 
         <UFormGroup label="Email" name="email" required>
-          <UInput v-model="state.email" placeholder="Your email" size="md" class="w-80" />
+          <UInput v-model="state.email" placeholder="Your email" size="xl" class="w-80" />
         </UFormGroup>
 
         <UFormGroup label="Password" name="password" required>
-          <UInput v-model="state.password" type="password" placeholder="Your password" size="md" class="w-80" />
+          <UInput v-model="state.password" type="password" placeholder="Your password" size="xl" class="w-80" />
         </UFormGroup>
 
         <UFormGroup label="Confirm Password" name="confirmPassword" required>
@@ -78,7 +78,7 @@ async function signUp(event: FormSubmitEvent<Schema>) {
             v-model="state.confirmPassword"
             type="password"
             placeholder="Confirm password"
-            size="md"
+            size="xl"
             class="w-80"
           />
         </UFormGroup>

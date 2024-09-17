@@ -278,6 +278,7 @@ const shouldDisplayDate = (index: number) => {
           variant="none"
           placeholder="Message..."
           :padded="false"
+          size="xl"
           class="mb-1"
           @keydown="handleKeyDown"
         />

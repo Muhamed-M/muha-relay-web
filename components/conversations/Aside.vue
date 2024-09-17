@@ -101,7 +101,7 @@ const leaveGroup = async () => {
             <UButton variant="ghost" icon="i-heroicons-pencil-square" @click="mode = 'edit'"></UButton>
           </template>
           <template v-else>
-            <UInput v-model="newName" placeholder="Group Name" class="flex-grow" />
+            <UInput v-model="newName" size="xl" placeholder="Group Name" class="flex-grow" />
             <UButton
               :loading="loading"
               :disabled="newName === conversation?.name"
