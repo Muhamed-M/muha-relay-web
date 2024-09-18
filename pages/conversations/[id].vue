@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { format, isSameMinute, isToday, isYesterday } from 'date-fns';
 import socket from '~/utils/websocket';
-import type { Conversation, Message } from '~/types';
+import type { Message } from '~/types';
 import { playIncomingMessageSound, playSentMessageSound } from '~/utils/sounds';
 import messageReceiptService from '~/services/messageReceiptService';
 const route = useRoute();
@@ -202,10 +202,12 @@ const shouldDisplayDate = (index: number) => {
           </template>
           <!-- content ready -->
           <template v-else>
-            <UAvatar chip-color="green" chip-position="top-right" size="xl" :alt="conversationTitle" />
+            <UAvatar v-if="conversation?.isGroup" size="xl" :alt="conversationTitle" />
+            <UAvatar v-else chip-color="green" chip-position="top-right" size="xl" :alt="conversationTitle" />
             <div>
               <h4 class="text-lg font-semibold">{{ conversationTitle }}</h4>
-              <p class="text-sm text-gray-500">Online</p>
+              <p v-if="conversation?.isGroup" class="text-sm text-gray-500">3 Online</p>
+              <p v-else class="text-sm text-gray-500">Online</p>
             </div>
           </template>
         </div>
