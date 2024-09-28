@@ -1,9 +1,12 @@
 <script setup lang="ts">
+import { getWebSocket } from '~/utils/websocket';
 const authStore = useAuthStore();
 const { user } = storeToRefs(authStore);
+const socket = getWebSocket();
 
 const signOut = () => {
   authStore.signOut();
+  if (socket) socket.close();
   navigateTo('/auth/sign-in');
 };
 </script>

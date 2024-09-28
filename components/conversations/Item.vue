@@ -19,6 +19,11 @@ const conversationTitle = computed(() => {
   return 'Unknown Conversation';
 });
 
+const isUserOnline = computed(() => {
+  const otherMember = props.conversation?.members.find((member: any) => member.user.id !== authStore.user?.id);
+  return otherMember?.user?.activityStatus === 'online' || false;
+});
+
 const formatDate = (date: Date) => {
   const parsedDate = new Date(date);
   if (isToday(parsedDate)) {
@@ -39,7 +44,15 @@ const formatDate = (date: Date) => {
     :class="[conversation?._count?.messages ?? 0 > 0 ? 'bg-primary-100' : '']"
   >
     <div class="flex items-center">
-      <UAvatar chip-color="green" chip-position="top-right" size="xl" :alt="conversationTitle" class="mr-3" />
+      <UAvatar v-if="conversation?.isGroup" size="xl" :alt="conversationTitle" class="mr-3" />
+      <UAvatar
+        v-else
+        :chip-color="isUserOnline ? 'green' : 'gray'"
+        chip-position="top-right"
+        size="xl"
+        :alt="conversationTitle"
+        class="mr-3"
+      />
       <div>
         <h3 class="text-lg font-semibold">{{ conversationTitle }}</h3>
         <p

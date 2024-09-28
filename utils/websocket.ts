@@ -1,17 +1,18 @@
+import authService from '~/services/auth';
+
 let socket: WebSocket | null = null;
 let reconnectAttempts = 0;
-const maxReconnectAttempts = 10;
-const reconnectDelay = 2000; // 2 seconds initial delay
+const maxReconnectAttempts = 5;
+const reconnectDelay = 3000; // 3 seconds initial delay
 
-const createWebSocket = () => {
+export const createWebSocket = () => {
   if (socket) return socket; // Prevent reinitializing the socket
 
-  // Example: use an auth token if needed
-  // const authStore = useAuthStore();
-  // const token = authStore?.user?.token;
+  const user = authService.getUserFromCookie();
 
-  // socket = new WebSocket(`ws://localhost:8080?token=${token}`);
-  socket = new WebSocket('http://localhost:8080');
+  if (!user?.token) return;
+
+  socket = new WebSocket(`ws://localhost:8080?token=${user.token}`);
 
   socket.onopen = () => {
     console.log('WebSocket connection established');
@@ -30,7 +31,18 @@ const createWebSocket = () => {
     console.error('WebSocket error:', error);
     socket?.close(); // Close the socket on error
   };
+
+  return socket;
 };
+
+export const closeWebSocket = () => {
+  if (socket) {
+    socket.close();
+    socket = null;
+  }
+};
+
+export const getWebSocket = () => socket;
 
 const attemptReconnect = () => {
   reconnectAttempts += 1;
@@ -48,6 +60,10 @@ const attemptReconnect = () => {
   }, delay);
 };
 
-if (process.client) createWebSocket();
-
-export default socket;
+// Optionally initialize the WebSocket if the user is already logged in
+if (process.client) {
+  const user = authService.getUserFromCookie();
+  if (user?.token) {
+    createWebSocket();
+  }
+}

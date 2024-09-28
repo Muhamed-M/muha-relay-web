@@ -4,7 +4,10 @@ export interface User {
   username: string;
   firstName: string;
   lastName?: string | null;
+  avatar?: string;
   phoneNumber?: string | null;
+  activityStatus: string;
+  status: string;
   createdAt: Date;
   updatedAt: Date;
   conversations?: ConversationMember[]; // Array of ConversationMember objects

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { z } from 'zod';
 import type { FormSubmitEvent } from '#ui/types';
+import { createWebSocket } from '~/utils/websocket';
 
 const authStore = useAuthStore();
 const { loading } = storeToRefs(authStore);
@@ -25,6 +26,7 @@ async function signIn(event: FormSubmitEvent<Schema>) {
   try {
     await authStore.signIn(event.data, true);
     await navigateTo('/conversations');
+    createWebSocket();
   } catch (error: any) {
     useNuxtApp().$toast.error(error.message);
     console.error(error);

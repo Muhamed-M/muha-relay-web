@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { format, isSameMinute, isToday, isYesterday } from 'date-fns';
-import socket from '~/utils/websocket';
+import { getWebSocket } from '~/utils/websocket';
 import type { Message } from '~/types';
 import { playIncomingMessageSound, playSentMessageSound } from '~/utils/sounds';
 import messageReceiptService from '~/services/messageReceiptService';
@@ -8,6 +8,7 @@ const route = useRoute();
 const authStore = useAuthStore();
 const conversationsStore = useConversationsStore();
 const user = authStore.user;
+const socket = getWebSocket();
 
 definePageMeta({
   layout: 'blank',
@@ -34,6 +35,11 @@ const conversationTitle = computed<string>(() => {
   return 'Unknown Conversation';
 });
 
+const isUserOnline = computed(() => {
+  const otherMember = conversation.value?.members?.find((member: any) => member.user.id !== authStore.user?.id);
+  return otherMember?.user?.activityStatus === 'online' || false;
+});
+
 onMounted(async () => {
   conversationsStore.getConversation(conversationId.value, user?.id);
   getMessages();
@@ -49,15 +55,23 @@ onMounted(async () => {
 
   socket.onmessage = async ({ data }) => {
     const messageObj = JSON.parse(data);
-    if (messageObj.type) return;
-    // update state
-    messages.value.push(messageObj);
-    playIncomingMessageSound();
 
-    // scroll to last message
-    await nextTick();
-    scrollToLastMessage();
-    await markMessagesAsRead();
+    if (messageObj.type === 'message') {
+      // update state
+      messages.value.push(messageObj);
+      playIncomingMessageSound();
+
+      // scroll to last message
+      await nextTick();
+      scrollToLastMessage();
+      await markMessagesAsRead();
+    } else if (messageObj.type === 'user-activity') {
+      conversation.value?.members?.forEach((m) => {
+        if (m.user?.id === messageObj.userId && m.user?.activityStatus) {
+          m.user.activityStatus = messageObj.activityStatus;
+        }
+      });
+    }
   };
 });
 
@@ -203,11 +217,17 @@ const shouldDisplayDate = (index: number) => {
           <!-- content ready -->
           <template v-else>
             <UAvatar v-if="conversation?.isGroup" size="xl" :alt="conversationTitle" />
-            <UAvatar v-else chip-color="green" chip-position="top-right" size="xl" :alt="conversationTitle" />
+            <UAvatar
+              v-else
+              :chip-color="isUserOnline ? 'green' : 'gray'"
+              chip-position="top-right"
+              size="xl"
+              :alt="conversationTitle"
+            />
             <div>
               <h4 class="text-lg font-semibold">{{ conversationTitle }}</h4>
               <p v-if="conversation?.isGroup" class="text-sm text-gray-500">3 Online</p>
-              <p v-else class="text-sm text-gray-500">Online</p>
+              <p v-else class="text-sm text-gray-500">{{ isUserOnline ? 'Online' : 'Offline' }}</p>
             </div>
           </template>
         </div>
