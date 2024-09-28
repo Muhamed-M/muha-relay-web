@@ -125,7 +125,12 @@ const leaveGroup = async () => {
             class="flex items-center justify-between"
           >
             <div class="space-x-2">
-              <UAvatar size="md" :alt="memeber.user?.username" />
+              <UAvatar
+                size="md"
+                :chip-color="memeber?.user?.activityStatus === 'online' ? 'green' : 'gray'"
+                chip-position="top-right"
+                :alt="memeber.user?.username"
+              />
               <span>{{ memeber.user?.username }}</span>
               <UBadge v-if="authStore.user?.id === memeber.user?.id" variant="soft" color="green" size="sm">You</UBadge>
             </div>

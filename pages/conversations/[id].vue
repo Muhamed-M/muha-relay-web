@@ -40,6 +40,10 @@ const isUserOnline = computed(() => {
   return otherMember?.user?.activityStatus === 'online' || false;
 });
 
+const onlineMembersCount = computed(() => {
+  return conversation.value?.members?.filter((m) => m.user?.activityStatus === 'online').length;
+});
+
 onMounted(async () => {
   conversationsStore.getConversation(conversationId.value, user?.id);
   getMessages();
@@ -226,7 +230,9 @@ const shouldDisplayDate = (index: number) => {
             />
             <div>
               <h4 class="text-lg font-semibold">{{ conversationTitle }}</h4>
-              <p v-if="conversation?.isGroup" class="text-sm text-gray-500">3 Online</p>
+              <p v-if="conversation?.isGroup" class="text-sm text-gray-500">
+                {{ onlineMembersCount }}/{{ conversation?.members?.length }} Online
+              </p>
               <p v-else class="text-sm text-gray-500">{{ isUserOnline ? 'Online' : 'Offline' }}</p>
             </div>
           </template>
