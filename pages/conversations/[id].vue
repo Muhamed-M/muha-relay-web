@@ -9,6 +9,7 @@ const authStore = useAuthStore();
 const conversationsStore = useConversationsStore();
 const user = authStore.user;
 const socket = getWebSocket();
+const { showNotification } = useNotifications();
 
 definePageMeta({
   layout: 'blank',
@@ -68,6 +69,7 @@ onMounted(async () => {
         // update state
         messages.value.push(messageObj);
         playIncomingMessageSound();
+        showNotification('New message in Muha Relay', messageObj.content);
 
         // scroll to last message
         await nextTick();

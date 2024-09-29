@@ -1,5 +1,10 @@
 <script setup lang="ts">
+const { requestNotificationPermission } = useNotifications();
 const isOpen = ref(false);
+
+onMounted(() => {
+  requestNotificationPermission();
+});
 </script>
 
 <template>

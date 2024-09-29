@@ -3,6 +3,16 @@ import { getWebSocket } from '~/utils/websocket';
 const authStore = useAuthStore();
 const { user } = storeToRefs(authStore);
 const socket = getWebSocket();
+// const colorMode = useColorMode();
+
+// const isDark = computed({
+//   get() {
+//     return colorMode.value === 'dark';
+//   },
+//   set() {
+//     colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark';
+//   },
+// });
 
 const signOut = () => {
   authStore.signOut();
@@ -21,7 +31,15 @@ const signOut = () => {
       </div>
     </div>
 
-    <ul>
+    <ul class="space-y-4">
+      <!-- <li class="flex items-center justify-between text-lg">
+        <div class="flex items-center gap-3">
+          <UIcon v-if="isDark" name="i-heroicons-moon-20-solid" class="w-6 h-6"></UIcon>
+          <UIcon v-else name="i-heroicons-sun-20-solid" class="w-6 h-6"></UIcon>
+          <span>Theme</span>
+        </div>
+        <UToggle v-model="isDark" />
+      </li> -->
       <li class="flex items-center gap-3 text-lg" @click="signOut()">
         <UIcon name="i-heroicons-arrow-left-start-on-rectangle" class="w-6 h-6"></UIcon>
         <span>Logout</span>
