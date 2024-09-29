@@ -13,6 +13,7 @@ onMounted(async () => {
 
   socket.onmessage = async ({ data }) => {
     const messageObj = JSON.parse(data);
+    console.log(messageObj);
 
     // If the message is for a specific conversation update
     if (messageObj.type === 'conversation-update' && messageObj.senderId !== authStore.user?.id) {

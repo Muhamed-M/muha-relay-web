@@ -21,6 +21,9 @@ const loading = ref<boolean>(true);
 const messages = ref<Message[]>([]);
 const newMessage = ref<string>('');
 const isAsideExpanded = ref<boolean>(false);
+const typingUsers = ref(new Set<string>());
+const isTyping = ref<boolean>(false);
+let typingTimeout: ReturnType<typeof setTimeout>;
 
 const conversationTitle = computed<string>(() => {
   if (conversation.value?.name) {
@@ -36,7 +39,7 @@ const conversationTitle = computed<string>(() => {
 });
 
 const isUserOnline = computed(() => {
-  const otherMember = conversation.value?.members?.find((member: any) => member.user.id !== authStore.user?.id);
+  const otherMember = conversation.value?.members?.find((member: any) => member.user.id !== user?.id);
   return otherMember?.user?.activityStatus === 'online' || false;
 });
 
@@ -60,21 +63,34 @@ onMounted(async () => {
   socket.onmessage = async ({ data }) => {
     const messageObj = JSON.parse(data);
 
-    if (messageObj.type === 'message') {
-      // update state
-      messages.value.push(messageObj);
-      playIncomingMessageSound();
+    switch (messageObj.type) {
+      case 'message':
+        // update state
+        messages.value.push(messageObj);
+        playIncomingMessageSound();
 
-      // scroll to last message
-      await nextTick();
-      scrollToLastMessage();
-      await markMessagesAsRead();
-    } else if (messageObj.type === 'user-activity') {
-      conversation.value?.members?.forEach((m) => {
-        if (m.user?.id === messageObj.userId && m.user?.activityStatus) {
-          m.user.activityStatus = messageObj.activityStatus;
-        }
-      });
+        // scroll to last message
+        await nextTick();
+        scrollToLastMessage();
+        await markMessagesAsRead();
+        break;
+      case 'user-activity':
+        conversation.value?.members?.forEach((m) => {
+          if (m.user?.id === messageObj.userId && m.user?.activityStatus) {
+            m.user.activityStatus = messageObj.activityStatus;
+          }
+        });
+        break;
+      case 'user-typing':
+        typingUsers.value.add(messageObj.username);
+
+        // Scroll typing indicator in the view
+        await nextTick();
+        if (chatContainer.value) chatContainer.value.scrollTop = chatContainer.value.scrollHeight;
+        break;
+      case 'user-stopped-typing':
+        typingUsers.value.delete(messageObj.username);
+        break;
     }
   };
 });
@@ -84,6 +100,8 @@ onBeforeUnmount(() => {
     socket.send(JSON.stringify({ type: 'left', conversationId: 0 }));
     socket.onmessage = null;
   }
+
+  clearTimeout(typingTimeout);
 });
 
 const sendMessage = async () => {
@@ -99,7 +117,21 @@ const sendMessage = async () => {
     // update state
     messages.value.push(data);
 
-    if (socket) socket.send(JSON.stringify(data));
+    if (socket) {
+      socket.send(JSON.stringify({ type: 'message', ...data }));
+
+      if (isTyping.value) {
+        isTyping.value = false;
+        socket.send(
+          JSON.stringify({
+            type: 'user-stopped-typing',
+            conversationId: conversationId.value,
+            username: user?.username,
+          })
+        );
+        clearTimeout(typingTimeout);
+      }
+    }
 
     // reset input
     newMessage.value = '';
@@ -170,6 +202,37 @@ const handleKeyDown = (event: KeyboardEvent) => {
     event.preventDefault();
     sendMessage();
   }
+
+  if (!socket) return;
+
+  if (!isTyping.value) {
+    // User started typing
+    isTyping.value = true;
+    socket.send(
+      JSON.stringify({
+        type: 'user-typing',
+        conversationId: conversationId.value,
+        username: user?.username,
+      })
+    );
+  }
+
+  // Clear the previous timeout
+  if (typingTimeout) {
+    clearTimeout(typingTimeout);
+  }
+
+  // Set a new timeout to detect when the user stops typing
+  typingTimeout = setTimeout(() => {
+    isTyping.value = false;
+    socket.send(
+      JSON.stringify({
+        type: 'user-stopped-typing',
+        conversationId: conversationId.value,
+        username: user?.username,
+      })
+    );
+  }, 2000);
 };
 
 const displayTime = (createdAt: Date) => {
@@ -279,7 +342,18 @@ const shouldDisplayDate = (index: number) => {
             <p>
               {{ message.content }}
             </p>
-            <p class="text-slate-200 text-sm text-right mt-2">{{ displayTime(message.createdAt) }}</p>
+            <div v-if="!conversation?.isGroup" class="flex items-center justify-between gap-4 mt-2">
+              <!-- Display message receipts only for direct conversations -->
+              <UTooltip v-if="!message.receipts?.[0]?.readAt" text="Sent">
+                <UIcon name="i-heroicons-check-circle" class="w-4 h-4"></UIcon>
+              </UTooltip>
+              <UTooltip v-else text="Read">
+                <UIcon name="i-heroicons-book-open" class="w-4 h-4"></UIcon>
+              </UTooltip>
+
+              <p class="text-slate-200 text-sm">{{ displayTime(message.createdAt) }}</p>
+            </div>
+            <p v-else class="text-slate-200 text-sm text-right mt-2">{{ displayTime(message.createdAt) }}</p>
           </div>
         </div>
 
@@ -297,6 +371,8 @@ const shouldDisplayDate = (index: number) => {
           </div>
         </div>
       </template>
+      <!-- Typing indicator -->
+      <TypingIndicator v-if="typingUsers.size > 0" :typing-users="typingUsers" />
     </div>
 
     <div class="min-h-36 px-2">
@@ -326,7 +402,7 @@ const shouldDisplayDate = (index: number) => {
     </div>
 
     <ConversationsAside
-      v-if="!loadingConversation"
+      v-if="conversation?.isGroup && !loadingConversation"
       v-model="isAsideExpanded"
       @close-chat-aside="isAsideExpanded = false"
     />
