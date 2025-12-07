@@ -12,7 +12,7 @@ export default defineNuxtConfig({
         {
           name: 'viewport',
           content:
-            'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, interactive-widget=resizes-content',
+            'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content',
         },
         { name: 'theme-color', content: '#000000' },
         { name: 'mobile-web-app-capable', content: 'yes' },

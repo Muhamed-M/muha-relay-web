@@ -22,6 +22,8 @@ const { loadingConversation, conversation } = storeToRefs(conversationsStore);
 const conversationId = ref<number>(Number(route.params.id));
 const chatContainer = ref<HTMLElement | null>(null);
 const headerRef = ref<HTMLElement | null>(null);
+const inputRef = ref<HTMLElement | null>(null);
+const mainContainer = ref<HTMLElement | null>(null);
 const loading = ref<boolean>(true);
 const messages = ref<Message[]>([]);
 const newMessage = ref<string>('');
@@ -30,16 +32,29 @@ const typingUsers = ref(new Set<string>());
 const isTyping = ref<boolean>(false);
 let typingTimeout: ReturnType<typeof setTimeout>;
 
-// Handle iOS keyboard - keep header at top of visual viewport
-const handleViewportResize = () => {
-  if (headerRef.value && window.visualViewport) {
-    headerRef.value.style.transform = `translateY(${window.visualViewport.offsetTop}px)`;
-  }
-};
+// Handle iOS keyboard - adjust layout when keyboard opens
+const handleViewportChange = () => {
+  if (!window.visualViewport) return;
 
-const handleViewportScroll = () => {
-  if (headerRef.value && window.visualViewport) {
-    headerRef.value.style.transform = `translateY(${window.visualViewport.offsetTop}px)`;
+  const viewport = window.visualViewport;
+  const offsetTop = viewport.offsetTop;
+  const keyboardHeight = window.innerHeight - viewport.height;
+
+  // Keep header at top of visual viewport
+  if (headerRef.value) {
+    headerRef.value.style.transform = `translateY(${offsetTop}px)`;
+  }
+
+  // Move input above keyboard
+  if (inputRef.value) {
+    inputRef.value.style.transform = `translateY(-${keyboardHeight}px)`;
+  }
+
+  // Adjust chat container to account for keyboard
+  if (chatContainer.value) {
+    chatContainer.value.style.paddingBottom = `${keyboardHeight}px`;
+    // Scroll to bottom when keyboard opens
+    chatContainer.value.scrollTop = chatContainer.value.scrollHeight;
   }
 };
 
@@ -117,8 +132,8 @@ onMounted(async () => {
 
   // Set up visualViewport listeners to handle iOS keyboard
   if (window.visualViewport) {
-    window.visualViewport.addEventListener('resize', handleViewportResize);
-    window.visualViewport.addEventListener('scroll', handleViewportScroll);
+    window.visualViewport.addEventListener('resize', handleViewportChange);
+    window.visualViewport.addEventListener('scroll', handleViewportChange);
   }
 
   if (!socket) return;
@@ -144,8 +159,8 @@ onBeforeUnmount(() => {
 
   // Clean up visualViewport listeners
   if (window.visualViewport) {
-    window.visualViewport.removeEventListener('resize', handleViewportResize);
-    window.visualViewport.removeEventListener('scroll', handleViewportScroll);
+    window.visualViewport.removeEventListener('resize', handleViewportChange);
+    window.visualViewport.removeEventListener('scroll', handleViewportChange);
   }
 
   clearTimeout(typingTimeout);
@@ -306,10 +321,10 @@ const shouldDisplayDate = (index: number) => {
 </script>
 
 <template>
-  <div class="fixed inset-0 flex flex-col overflow-hidden overscroll-none">
+  <div ref="mainContainer" class="fixed inset-0 flex flex-col overflow-hidden overscroll-none">
     <div
       ref="headerRef"
-      class="flex items-center justify-between shadow-md py-3 px-2 min-h-16 shrink-0 bg-white dark:bg-gray-800 z-50"
+      class="header-safe flex items-center justify-between shadow-md py-3 px-2 min-h-16 shrink-0 bg-white dark:bg-gray-800 z-50"
     >
       <div class="flex items-center gap-1">
         <NuxtLink to="/conversations">
@@ -362,77 +377,80 @@ const shouldDisplayDate = (index: number) => {
 
     <div
       ref="chatContainer"
-      class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-none py-4 px-2 space-y-2"
+      class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-none px-2"
       @scroll="onScroll"
     >
-      <div v-if="!loading && messages?.length === 0" class="flex items-center justify-center mt-40">
-        <UIcon name="i-heroicons-chat-bubble-bottom-center-text" class="w-9 h-9 mr-3" />
-        <h3 class="text-lg font-semibold">No Messages</h3>
-      </div>
+      <!-- Inner container that pushes messages to bottom -->
+      <div class="min-h-full flex flex-col justify-end py-4 space-y-2">
+        <div v-if="!loading && messages?.length === 0" class="flex-1 flex items-center justify-center">
+          <UIcon name="i-heroicons-chat-bubble-bottom-center-text" class="w-9 h-9 mr-3" />
+          <h3 class="text-lg font-semibold">No Messages</h3>
+        </div>
 
-      <!-- loop over messages in conversation -->
-      <template v-else v-for="(message, index) in messages">
-        <!-- display messages dates -->
-        <template v-if="shouldDisplayDate(index)">
-          <UDivider
-            v-if="isToday(message.createdAt)"
-            label="Today"
-            :ui="{ label: 'bg-gray-200 text-slate-800 py-1 px-2 rounded-lg' }"
-          />
-          <UDivider
-            v-else-if="isYesterday(message.createdAt)"
-            label="Yesterday"
-            :ui="{ label: 'bg-gray-200 text-slate-800 py-1 px-2 rounded-lg' }"
-          />
-          <UDivider
-            v-else
-            :label="format(new Date(message.createdAt), 'EEEE, dd MMMM yyyy')"
-            :ui="{ label: 'bg-gray-200 text-slate-800 py-1 px-2 rounded-lg' }"
-          />
-        </template>
+        <!-- loop over messages in conversation -->
+        <template v-else v-for="(message, index) in messages">
+          <!-- display messages dates -->
+          <template v-if="shouldDisplayDate(index)">
+            <UDivider
+              v-if="isToday(message.createdAt)"
+              label="Today"
+              :ui="{ label: 'bg-gray-200 text-slate-800 py-1 px-2 rounded-lg' }"
+            />
+            <UDivider
+              v-else-if="isYesterday(message.createdAt)"
+              label="Yesterday"
+              :ui="{ label: 'bg-gray-200 text-slate-800 py-1 px-2 rounded-lg' }"
+            />
+            <UDivider
+              v-else
+              :label="format(new Date(message.createdAt), 'EEEE, dd MMMM yyyy')"
+              :ui="{ label: 'bg-gray-200 text-slate-800 py-1 px-2 rounded-lg' }"
+            />
+          </template>
 
-        <!-- sent messages conversation cloud -->
-        <div v-if="message.senderId === user?.id" class="flex justify-end">
-          <div class="max-w-80 bg-primary text-white py-2 px-4 rounded-lg rounded-br-none break-words">
-            <p>
-              {{ message.content }}
-            </p>
-            <div v-if="!conversation?.isGroup" class="flex items-center justify-between gap-4 mt-2">
-              <!-- Display message receipts only for direct conversations -->
-              <UTooltip v-if="!message.receipts?.[0]?.readAt" text="Sent">
-                <UIcon name="i-heroicons-check-circle" class="w-4 h-4"></UIcon>
-              </UTooltip>
-              <UTooltip v-else text="Read">
-                <UIcon name="i-heroicons-book-open" class="w-4 h-4"></UIcon>
-              </UTooltip>
+          <!-- sent messages conversation cloud -->
+          <div v-if="message.senderId === user?.id" class="flex justify-end">
+            <div class="max-w-80 bg-primary text-white py-2 px-4 rounded-lg rounded-br-none break-words">
+              <p>
+                {{ message.content }}
+              </p>
+              <div v-if="!conversation?.isGroup" class="flex items-center justify-between gap-4 mt-2">
+                <!-- Display message receipts only for direct conversations -->
+                <UTooltip v-if="!message.receipts?.[0]?.readAt" text="Sent">
+                  <UIcon name="i-heroicons-check-circle" class="w-4 h-4"></UIcon>
+                </UTooltip>
+                <UTooltip v-else text="Read">
+                  <UIcon name="i-heroicons-book-open" class="w-4 h-4"></UIcon>
+                </UTooltip>
 
-              <p class="text-slate-200 text-sm">{{ displayTime(message.createdAt) }}</p>
+                <p class="text-slate-200 text-sm">{{ displayTime(message.createdAt) }}</p>
+              </div>
+              <p v-else class="text-slate-200 text-sm text-right mt-2">{{ displayTime(message.createdAt) }}</p>
             </div>
-            <p v-else class="text-slate-200 text-sm text-right mt-2">{{ displayTime(message.createdAt) }}</p>
           </div>
-        </div>
 
-        <!-- received messages conversation cloud -->
-        <div v-else class="flex justify-start">
-          <UAvatar v-if="conversation?.isGroup" :alt="message?.sender?.username" size="sm" class="mr-2" />
-          <div class="max-w-80 bg-gray-200m dark:bg-gray-800 py-2 px-4 rounded-lg rounded-bl-none break-words">
-            <p v-if="conversation?.isGroup" class="text-primary">
-              {{ message?.sender?.username }}
-            </p>
-            <p>
-              {{ message.content }}
-            </p>
-            <p class="text-slate-800 dark:text-slate-200 text-sm text-left mt-2">
-              {{ displayTime(message.createdAt) }}
-            </p>
+          <!-- received messages conversation cloud -->
+          <div v-else class="flex justify-start">
+            <UAvatar v-if="conversation?.isGroup" :alt="message?.sender?.username" size="sm" class="mr-2" />
+            <div class="max-w-80 bg-gray-200m dark:bg-gray-800 py-2 px-4 rounded-lg rounded-bl-none break-words">
+              <p v-if="conversation?.isGroup" class="text-primary">
+                {{ message?.sender?.username }}
+              </p>
+              <p>
+                {{ message.content }}
+              </p>
+              <p class="text-slate-800 dark:text-slate-200 text-sm text-left mt-2">
+                {{ displayTime(message.createdAt) }}
+              </p>
+            </div>
           </div>
-        </div>
-      </template>
-      <!-- Typing indicator -->
-      <TypingIndicator v-if="typingUsers.size > 0" :typing-users="typingUsers" />
+        </template>
+        <!-- Typing indicator -->
+        <TypingIndicator v-if="typingUsers.size > 0" :typing-users="typingUsers" />
+      </div>
     </div>
 
-    <div class="shrink-0 px-2 pt-2 pb-4">
+    <div ref="inputRef" class="input-safe shrink-0 px-2 pt-2 pb-4">
       <div class="w-full bg-gray-200 dark:bg-gray-800 rounded-lg px-3 py-2 flex items-center gap-2">
         <UTextarea
           ref="messageInput"
@@ -464,8 +482,15 @@ const shouldDisplayDate = (index: number) => {
   font-size: 16px !important;
 }
 
-/* Ensure header stays pinned when keyboard opens on iOS */
-[ref='headerRef'] {
+/* Safe area for iOS notch/status bar - max() ensures minimum padding on regular browsers */
+.header-safe {
+  padding-top: max(0.75rem, env(safe-area-inset-top, 0.75rem));
+  will-change: transform;
+}
+
+/* Safe area for iOS home indicator */
+.input-safe {
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 1rem);
   will-change: transform;
 }
 </style>
