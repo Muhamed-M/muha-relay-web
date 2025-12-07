@@ -248,8 +248,8 @@ const markMessagesAsRead = async () => {
 const scrollToLastMessage = () => {
   if (!chatContainer.value) return;
 
-  const lastMessage = chatContainer.value.lastElementChild;
-  lastMessage?.scrollIntoView({ behavior: 'smooth' });
+  // Scroll to bottom of the chat container
+  chatContainer.value.scrollTop = chatContainer.value.scrollHeight;
 };
 
 // function for scroll pagination
@@ -490,7 +490,7 @@ const shouldDisplayDate = (index: number) => {
 
 /* Safe area for iOS home indicator */
 .input-safe {
-  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 1rem);
+  /* padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 1rem); */
   will-change: transform;
 }
 </style>
