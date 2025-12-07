@@ -459,7 +459,7 @@ const shouldDisplayDate = (index: number) => {
       </div>
     </div>
 
-    <div ref="inputRef" class="input-safe shrink-0 px-2 pt-2">
+    <div ref="inputRef" class="input-safe shrink-0 px-2 py-2">
       <div class="w-full bg-gray-200 dark:bg-gray-800 rounded-lg px-3 py-2 flex items-center gap-2">
         <UTextarea
           ref="messageInput"
@@ -497,9 +497,8 @@ const shouldDisplayDate = (index: number) => {
   will-change: transform;
 }
 
-/* Safe area for iOS home indicator */
+/* Safe area for iOS home indicator - minimal padding, PWA handles safe area */
 .input-safe {
-  padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0.5rem));
   will-change: transform;
 }
 </style>
