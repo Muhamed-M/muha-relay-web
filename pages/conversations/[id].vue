@@ -280,10 +280,8 @@ const shouldDisplayDate = (index: number) => {
 </script>
 
 <template>
-  <div class="h-[100dvh] max-h-[100dvh] flex flex-col overflow-hidden overscroll-none">
-    <div
-      class="flex items-center justify-between shadow-md py-3 px-2 min-h-16 shrink-0 sticky top-0 z-10 bg-white dark:bg-gray-900"
-    >
+  <div class="fixed inset-0 flex flex-col overflow-hidden overscroll-none">
+    <div class="flex items-center justify-between shadow-md py-3 px-2 min-h-16 shrink-0 bg-white dark:bg-gray-800">
       <div class="flex items-center gap-1">
         <NuxtLink to="/conversations">
           <UButton variant="ghost" size="md">
@@ -309,6 +307,7 @@ const shouldDisplayDate = (index: number) => {
             <UAvatar v-if="conversation?.isGroup" size="xl" :alt="conversationTitle" />
             <UAvatar
               v-else
+              class="border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
               :chip-color="isUserOnline ? 'green' : 'gray'"
               chip-position="top-right"
               size="xl"
@@ -429,3 +428,10 @@ const shouldDisplayDate = (index: number) => {
     />
   </div>
 </template>
+
+<style scoped>
+/* Force 16px font size on textarea to prevent iOS zoom */
+:deep(textarea) {
+  font-size: 16px !important;
+}
+</style>

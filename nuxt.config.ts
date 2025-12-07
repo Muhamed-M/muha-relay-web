@@ -9,7 +9,11 @@ export default defineNuxtConfig({
         { rel: 'apple-touch-icon', href: '/favicon.svg' },
       ],
       meta: [
-        { name: 'viewport', content: 'width=device-width, initial-scale=1, interactive-widget=resizes-content' },
+        {
+          name: 'viewport',
+          content:
+            'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, interactive-widget=resizes-content',
+        },
         { name: 'theme-color', content: '#000000' },
         { name: 'mobile-web-app-capable', content: 'yes' },
         { name: 'apple-mobile-web-app-status-bar-style', content: 'black-translucent' },
