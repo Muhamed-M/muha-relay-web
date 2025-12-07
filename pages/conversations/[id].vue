@@ -50,12 +50,11 @@ const onlineMembersCount = computed(() => {
 
 onMounted(async () => {
   conversationsStore.getConversation(conversationId.value, user?.id);
-  getMessages();
+  await getMessages();
   markMessagesAsRead();
 
-  setTimeout(() => {
-    scrollToLastMessage();
-  }, 50);
+  await nextTick();
+  scrollToLastMessage();
 
   if (!socket) return;
 
@@ -262,7 +261,7 @@ const shouldDisplayDate = (index: number) => {
 
 <template>
   <div class="h-screen max-h-screen flex flex-col">
-    <div class="flex items-center justify-between shadow-md py-3 px-2 min-h-20 bg-white">
+    <div class="flex items-center justify-between shadow-md py-3 px-2 min-h-20">
       <div class="flex items-center gap-1">
         <NuxtLink to="/conversations">
           <UButton variant="ghost" size="md">
@@ -311,7 +310,7 @@ const shouldDisplayDate = (index: number) => {
       </UButton>
     </div>
 
-    <div ref="chatContainer" class="flex-grow overflow-y-scroll py-4 px-2 space-y-3" @scroll="onScroll">
+    <div ref="chatContainer" class="flex-grow overflow-y-scroll py-4 px-2 space-y-2" @scroll="onScroll">
       <div v-if="!loading && messages?.length === 0" class="flex items-center justify-center mt-40">
         <UIcon name="i-heroicons-chat-bubble-bottom-center-text" class="w-9 h-9 mr-3" />
         <h3 class="text-lg font-semibold">No Messages</h3>
@@ -378,7 +377,7 @@ const shouldDisplayDate = (index: number) => {
     </div>
 
     <div class="min-h-36 px-2">
-      <div class="w-full bg-gray-200 rounded-lg px-4 py-4">
+      <div class="w-full bg-gray-200 dark:bg-gray-800 rounded-lg px-4 py-4">
         <UTextarea
           v-model="newMessage"
           variant="none"

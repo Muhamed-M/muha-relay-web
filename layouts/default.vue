@@ -9,7 +9,7 @@ onMounted(() => {
 
 <template>
   <div class="h-screen">
-    <div class="sticky top-0 flex items-center gap-4 px-4 py-2 shadow-md z-20 bg-white">
+    <div class="sticky top-0 flex items-center gap-4 px-4 py-2 shadow-md z-20">
       <img src="/favicon.svg" alt="logo" width="50px" />
       <h2 class="font-semibold text-lg">Conversations</h2>
     </div>
@@ -18,7 +18,7 @@ onMounted(() => {
       <slot />
     </main>
 
-    <div class="w-screen fixed bottom-0 flex justify-around items-center py-4 z-20 bottom-nav-shadow bg-white">
+    <div class="w-screen fixed bottom-0 flex justify-around items-center py-4 z-20 bottom-nav-shadow">
       <NuxtLink to="/conversations">
         <UIcon name="i-ph-chat-thin" class="w-9 h-9"></UIcon>
       </NuxtLink>
