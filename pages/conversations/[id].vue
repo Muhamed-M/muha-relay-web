@@ -388,7 +388,9 @@ const shouldDisplayDate = (index: number) => {
             <p>
               {{ message.content }}
             </p>
-            <p class="text-slate-800 text-sm text-left mt-2">{{ displayTime(message.createdAt) }}</p>
+            <p class="text-slate-800 dark:text-slate-200 text-sm text-left mt-2">
+              {{ displayTime(message.createdAt) }}
+            </p>
           </div>
         </div>
       </template>
