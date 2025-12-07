@@ -59,11 +59,21 @@ const signOut = () => {
 
       <li class="flex items-center justify-between text-lg">
         <div class="flex items-center gap-3">
-          <UIcon v-if="isDark" name="i-heroicons-moon-20-solid" class="w-6 h-6" />
-          <UIcon v-else name="i-heroicons-sun-20-solid" class="w-6 h-6" />
+          <ClientOnly>
+            <UIcon v-if="isDark" name="i-heroicons-moon-20-solid" class="w-6 h-6" />
+            <UIcon v-else name="i-heroicons-sun-20-solid" class="w-6 h-6" />
+            <template #fallback>
+              <div class="w-6 h-6" />
+            </template>
+          </ClientOnly>
           <span>Dark Mode</span>
         </div>
-        <UToggle v-model="isDark" />
+        <ClientOnly>
+          <UToggle v-model="isDark" />
+          <template #fallback>
+            <div class="h-5 w-9 rounded-full bg-gray-200 dark:bg-gray-700" />
+          </template>
+        </ClientOnly>
       </li>
 
       <li class="flex items-center gap-3 text-lg cursor-pointer" @click="signOut()">
