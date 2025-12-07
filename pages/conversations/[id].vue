@@ -32,9 +32,18 @@ const typingUsers = ref(new Set<string>());
 const isTyping = ref<boolean>(false);
 let typingTimeout: ReturnType<typeof setTimeout>;
 
-// Handle iOS keyboard - adjust layout when keyboard opens
+// Check if running as PWA (standalone mode)
+const isStandalone = () => {
+  return window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
+};
+
+// Handle iOS keyboard - adjust layout when keyboard opens (only in PWA mode)
 const handleViewportChange = () => {
   if (!window.visualViewport) return;
+
+  // Only apply transforms in PWA/standalone mode
+  // Regular Safari browser handles keyboard natively
+  if (!isStandalone()) return;
 
   const viewport = window.visualViewport;
   const offsetTop = viewport.offsetTop;
