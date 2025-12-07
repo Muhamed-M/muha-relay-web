@@ -49,21 +49,26 @@ const handleViewportChange = () => {
   const offsetTop = viewport.offsetTop;
   const keyboardHeight = window.innerHeight - viewport.height;
 
+  // Only apply transforms if keyboard is actually open (height > 100px threshold)
+  const isKeyboardOpen = keyboardHeight > 100;
+
   // Keep header at top of visual viewport
   if (headerRef.value) {
-    headerRef.value.style.transform = `translateY(${offsetTop}px)`;
+    headerRef.value.style.transform = isKeyboardOpen ? `translateY(${offsetTop}px)` : '';
   }
 
   // Move input above keyboard
   if (inputRef.value) {
-    inputRef.value.style.transform = `translateY(-${keyboardHeight}px)`;
+    inputRef.value.style.transform = isKeyboardOpen ? `translateY(-${keyboardHeight}px)` : '';
   }
 
   // Adjust chat container to account for keyboard
   if (chatContainer.value) {
-    chatContainer.value.style.paddingBottom = `${keyboardHeight}px`;
-    // Scroll to bottom when keyboard opens
-    chatContainer.value.scrollTop = chatContainer.value.scrollHeight;
+    chatContainer.value.style.paddingBottom = isKeyboardOpen ? `${keyboardHeight}px` : '';
+    if (isKeyboardOpen) {
+      // Scroll to bottom when keyboard opens
+      chatContainer.value.scrollTop = chatContainer.value.scrollHeight;
+    }
   }
 };
 
@@ -497,7 +502,7 @@ const shouldDisplayDate = (index: number) => {
   will-change: transform;
 }
 
-/* Safe area for iOS home indicator - minimal padding, PWA handles safe area */
+/* Safe area for iOS home indicator */
 .input-safe {
   will-change: transform;
 }
