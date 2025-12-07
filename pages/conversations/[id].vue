@@ -499,5 +499,11 @@ const shouldDisplayDate = (index: number) => {
 /* Safe area for iOS notch/status bar - max() ensures minimum padding on regular browsers */
 .header-safe {
   padding-top: max(0.75rem, env(safe-area-inset-top, 0.75rem));
+  will-change: transform;
+}
+
+/* Safe area for iOS home indicator */
+.input-safe {
+  will-change: transform;
 }
 </style>
