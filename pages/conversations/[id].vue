@@ -441,7 +441,7 @@ const shouldDisplayDate = (index: number) => {
           <!-- received messages conversation cloud -->
           <div v-else class="flex justify-start">
             <UAvatar v-if="conversation?.isGroup" :alt="message?.sender?.username" size="sm" class="mr-2" />
-            <div class="max-w-80 bg-gray-200m dark:bg-gray-800 py-2 px-4 rounded-lg rounded-bl-none break-words">
+            <div class="max-w-80 bg-gray-200 dark:bg-gray-800 py-2 px-4 rounded-lg rounded-bl-none break-words">
               <p v-if="conversation?.isGroup" class="text-primary">
                 {{ message?.sender?.username }}
               </p>
