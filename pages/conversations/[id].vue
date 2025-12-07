@@ -21,6 +21,7 @@ definePageMeta({
 const { loadingConversation, conversation } = storeToRefs(conversationsStore);
 const conversationId = ref<number>(Number(route.params.id));
 const chatContainer = ref<HTMLElement | null>(null);
+const headerRef = ref<HTMLElement | null>(null);
 const loading = ref<boolean>(true);
 const messages = ref<Message[]>([]);
 const newMessage = ref<string>('');
@@ -28,6 +29,19 @@ const isAsideExpanded = ref<boolean>(false);
 const typingUsers = ref(new Set<string>());
 const isTyping = ref<boolean>(false);
 let typingTimeout: ReturnType<typeof setTimeout>;
+
+// Handle iOS keyboard - keep header at top of visual viewport
+const handleViewportResize = () => {
+  if (headerRef.value && window.visualViewport) {
+    headerRef.value.style.transform = `translateY(${window.visualViewport.offsetTop}px)`;
+  }
+};
+
+const handleViewportScroll = () => {
+  if (headerRef.value && window.visualViewport) {
+    headerRef.value.style.transform = `translateY(${window.visualViewport.offsetTop}px)`;
+  }
+};
 
 const conversationTitle = computed<string>(() => {
   if (conversation.value?.name) {
@@ -101,6 +115,12 @@ onMounted(async () => {
   await nextTick();
   scrollToLastMessage();
 
+  // Set up visualViewport listeners to handle iOS keyboard
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', handleViewportResize);
+    window.visualViewport.addEventListener('scroll', handleViewportScroll);
+  }
+
   if (!socket) return;
 
   // IMPORTANT: Register message handler BEFORE sending join message
@@ -120,6 +140,12 @@ onBeforeUnmount(() => {
 
   if (socket) {
     socket.send(JSON.stringify({ type: 'left', conversationId: 0 }));
+  }
+
+  // Clean up visualViewport listeners
+  if (window.visualViewport) {
+    window.visualViewport.removeEventListener('resize', handleViewportResize);
+    window.visualViewport.removeEventListener('scroll', handleViewportScroll);
   }
 
   clearTimeout(typingTimeout);
@@ -281,7 +307,10 @@ const shouldDisplayDate = (index: number) => {
 
 <template>
   <div class="fixed inset-0 flex flex-col overflow-hidden overscroll-none">
-    <div class="flex items-center justify-between shadow-md py-3 px-2 min-h-16 shrink-0 bg-white dark:bg-gray-800">
+    <div
+      ref="headerRef"
+      class="flex items-center justify-between shadow-md py-3 px-2 min-h-16 shrink-0 bg-white dark:bg-gray-800 z-50"
+    >
       <div class="flex items-center gap-1">
         <NuxtLink to="/conversations">
           <UButton variant="ghost" size="md">
@@ -433,5 +462,10 @@ const shouldDisplayDate = (index: number) => {
 /* Force 16px font size on textarea to prevent iOS zoom */
 :deep(textarea) {
   font-size: 16px !important;
+}
+
+/* Ensure header stays pinned when keyboard opens on iOS */
+[ref='headerRef'] {
+  will-change: transform;
 }
 </style>
