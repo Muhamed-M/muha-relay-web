@@ -280,8 +280,10 @@ const shouldDisplayDate = (index: number) => {
 </script>
 
 <template>
-  <div class="h-[100dvh] max-h-[100dvh] flex flex-col">
-    <div class="flex items-center justify-between shadow-md py-3 px-2 min-h-16 shrink-0">
+  <div class="h-[100dvh] max-h-[100dvh] flex flex-col overflow-hidden overscroll-none">
+    <div
+      class="flex items-center justify-between shadow-md py-3 px-2 min-h-16 shrink-0 sticky top-0 z-10 bg-white dark:bg-gray-900"
+    >
       <div class="flex items-center gap-1">
         <NuxtLink to="/conversations">
           <UButton variant="ghost" size="md">
@@ -332,7 +334,7 @@ const shouldDisplayDate = (index: number) => {
 
     <div
       ref="chatContainer"
-      class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden py-4 px-2 space-y-2"
+      class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-none py-4 px-2 space-y-2"
       @scroll="onScroll"
     >
       <div v-if="!loading && messages?.length === 0" class="flex items-center justify-center mt-40">
@@ -410,11 +412,10 @@ const shouldDisplayDate = (index: number) => {
           variant="none"
           placeholder="Message..."
           :padded="false"
-          size="lg"
           :rows="1"
           autoresize
           class="flex-1"
-          :ui="{ base: 'max-h-28 overflow-y-auto resize-none' }"
+          :ui="{ base: 'max-h-28 overflow-y-auto resize-none text-base' }"
           @keydown="handleKeyDown"
         />
         <UButton size="sm" icon="i-iconamoon-send-thin" @click="sendMessage" class="shrink-0" />
