@@ -280,8 +280,8 @@ const shouldDisplayDate = (index: number) => {
 </script>
 
 <template>
-  <div class="h-screen max-h-screen flex flex-col">
-    <div class="flex items-center justify-between shadow-md py-3 px-2 min-h-20">
+  <div class="h-[100dvh] max-h-[100dvh] flex flex-col">
+    <div class="flex items-center justify-between shadow-md py-3 px-2 min-h-16 shrink-0">
       <div class="flex items-center gap-1">
         <NuxtLink to="/conversations">
           <UButton variant="ghost" size="md">
@@ -330,7 +330,11 @@ const shouldDisplayDate = (index: number) => {
       </UButton>
     </div>
 
-    <div ref="chatContainer" class="flex-grow overflow-y-scroll py-4 px-2 space-y-2" @scroll="onScroll">
+    <div
+      ref="chatContainer"
+      class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden py-4 px-2 space-y-2"
+      @scroll="onScroll"
+    >
       <div v-if="!loading && messages?.length === 0" class="flex items-center justify-center mt-40">
         <UIcon name="i-heroicons-chat-bubble-bottom-center-text" class="w-9 h-9 mr-3" />
         <h3 class="text-lg font-semibold">No Messages</h3>
@@ -359,7 +363,7 @@ const shouldDisplayDate = (index: number) => {
 
         <!-- sent messages conversation cloud -->
         <div v-if="message.senderId === user?.id" class="flex justify-end">
-          <div class="max-w-80 bg-primary text-white py-2 px-4 rounded-lg rounded-br-none">
+          <div class="max-w-80 bg-primary text-white py-2 px-4 rounded-lg rounded-br-none break-words">
             <p>
               {{ message.content }}
             </p>
@@ -381,7 +385,7 @@ const shouldDisplayDate = (index: number) => {
         <!-- received messages conversation cloud -->
         <div v-else class="flex justify-start">
           <UAvatar v-if="conversation?.isGroup" :alt="message?.sender?.username" size="sm" class="mr-2" />
-          <div class="max-w-80 bg-gray-200m dark:bg-gray-800 py-2 px-4 rounded-lg rounded-bl-none">
+          <div class="max-w-80 bg-gray-200m dark:bg-gray-800 py-2 px-4 rounded-lg rounded-bl-none break-words">
             <p v-if="conversation?.isGroup" class="text-primary">
               {{ message?.sender?.username }}
             </p>
@@ -398,29 +402,22 @@ const shouldDisplayDate = (index: number) => {
       <TypingIndicator v-if="typingUsers.size > 0" :typing-users="typingUsers" />
     </div>
 
-    <div class="min-h-36 px-2">
-      <div class="w-full bg-gray-200 dark:bg-gray-800 rounded-lg px-4 py-4">
+    <div class="shrink-0 px-2 pt-2 pb-4">
+      <div class="w-full bg-gray-200 dark:bg-gray-800 rounded-lg px-3 py-2 flex items-center gap-2">
         <UTextarea
+          ref="messageInput"
           v-model="newMessage"
           variant="none"
           placeholder="Message..."
           :padded="false"
-          size="xl"
-          class="mb-1"
+          size="lg"
+          :rows="1"
+          autoresize
+          class="flex-1"
+          :ui="{ base: 'max-h-28 overflow-y-auto resize-none' }"
           @keydown="handleKeyDown"
         />
-
-        <div class="flex justify-between items-center">
-          <div>
-            <!-- <UIcon name="i-iconamoon-attachment-thin" class="w-6 h-6 mr-3"></UIcon>
-            <UIcon name="i-ph-microphone-thin" class="w-6 h-6"></UIcon> -->
-          </div>
-          <UButton size="md" label="Send" @click="sendMessage">
-            <template #trailing>
-              <UIcon name="i-iconamoon-send-thin" class="w-5 h-5"></UIcon>
-            </template>
-          </UButton>
-        </div>
+        <UButton size="sm" icon="i-iconamoon-send-thin" @click="sendMessage" class="shrink-0" />
       </div>
     </div>
 
