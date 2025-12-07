@@ -9,7 +9,7 @@ onMounted(() => {
 
 <template>
   <div class="h-screen">
-    <div class="sticky top-0 flex items-center gap-4 px-4 py-2 shadow-md z-20">
+    <div class="sticky top-0 flex items-center gap-4 px-4 py-2 shadow-md z-20 bg-white dark:bg-gray-900">
       <img src="/favicon.svg" alt="logo" width="50px" />
       <h2 class="font-semibold text-lg">Conversations</h2>
     </div>

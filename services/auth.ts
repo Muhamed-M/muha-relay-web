@@ -15,18 +15,11 @@ class AuthService {
   }
 
   // Save user and token to cookie
-  saveUserToCookie(user: User, rememberMe: boolean): void {
-    const now = Date.now();
-    const userCookie = useCookie('user');
+  saveUserToCookie(user: User, rememberMe: boolean = false): void {
+    const maxAge = rememberMe ? 60 * 60 * 24 * 7 : undefined; // 7 days in seconds, or session cookie
+    const userCookie = useCookie('user', { maxAge });
 
-    const userData = {
-      ...user,
-      expiresOn: now + 1000 * 60 * 60 * 24 * 7, // 7 days expiry for the session
-    };
-
-    if (rememberMe) {
-      userCookie.value = JSON.stringify(userData);
-    }
+    userCookie.value = JSON.stringify(user);
 
     // set token in axios headers
     this.setAuthHeader(user.token);
@@ -56,21 +49,6 @@ class AuthService {
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     } else {
       delete axios.defaults.headers.common['Authorization'];
-    }
-  }
-
-  // Check if the user's session is still valid
-  isSessionActive(user: User) {
-    const now = Date.now();
-    return user?.expiresOn && user.expiresOn > now;
-  }
-
-  // Handle session expiry
-  handleSessionExpiry(): void {
-    const user = this.getUserFromCookie();
-
-    if (user && !this.isSessionActive(user)) {
-      this.removeUserFromCookie();
     }
   }
 }

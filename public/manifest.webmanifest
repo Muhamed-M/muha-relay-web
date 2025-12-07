@@ -1,7 +1,7 @@
 {
   "name": "Muha Relay",
   "short_name": "Muha Relay",
-  "start_url": "/",
+  "start_url": "/conversations",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#000000",

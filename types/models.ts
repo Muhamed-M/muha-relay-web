@@ -14,7 +14,6 @@ export interface User {
   messages?: Message[]; // Array of Message objects
   receipts?: MessageReceipt[]; // Array of MessageReceipt objects
   token: string; // JWT token
-  expiresOn: number; // Timestamp of when the session expires
 }
 
 export interface Conversation {
