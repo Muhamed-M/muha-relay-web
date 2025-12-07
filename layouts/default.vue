@@ -32,6 +32,7 @@ onMounted(() => {
     </div>
 
     <ConversationsHandler v-model="isOpen" @close="isOpen = false" />
+    <PwaInstallPrompt />
   </div>
 </template>
 

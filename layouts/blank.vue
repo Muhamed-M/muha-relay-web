@@ -1,3 +1,6 @@
 <template>
-  <slot />
+  <div>
+    <slot />
+    <PwaInstallPrompt />
+  </div>
 </template>
