@@ -5,8 +5,13 @@ let reconnectAttempts = 0;
 const maxReconnectAttempts = 5;
 const reconnectDelay = 3000; // 3 seconds initial delay
 
+// Store message handlers for proper cleanup
+type MessageHandler = (event: MessageEvent) => void;
+const messageHandlers = new Set<MessageHandler>();
+
 export const createWebSocket = () => {
-  if (socket) return socket; // Prevent reinitializing the socket
+  if (socket && socket.readyState === WebSocket.OPEN) return socket; // Prevent reinitializing if already connected
+  if (socket && socket.readyState === WebSocket.CONNECTING) return socket; // Wait for existing connection
 
   const user = authService.getUserFromCookie();
 
@@ -32,6 +37,17 @@ export const createWebSocket = () => {
     socket?.close(); // Close the socket on error
   };
 
+  // Central message handler that dispatches to all registered handlers
+  socket.onmessage = (event: MessageEvent) => {
+    messageHandlers.forEach((handler) => {
+      try {
+        handler(event);
+      } catch (error) {
+        console.error('Error in WebSocket message handler:', error);
+      }
+    });
+  };
+
   return socket;
 };
 
@@ -40,9 +56,29 @@ export const closeWebSocket = () => {
     socket.close();
     socket = null;
   }
+  messageHandlers.clear();
 };
 
 export const getWebSocket = () => socket;
+
+/**
+ * Add a message handler to the WebSocket.
+ * Multiple handlers can be registered and will all receive messages.
+ * Returns a cleanup function to remove the handler.
+ */
+export const addMessageHandler = (handler: MessageHandler): (() => void) => {
+  messageHandlers.add(handler);
+  return () => {
+    messageHandlers.delete(handler);
+  };
+};
+
+/**
+ * Remove a specific message handler
+ */
+export const removeMessageHandler = (handler: MessageHandler): void => {
+  messageHandlers.delete(handler);
+};
 
 const attemptReconnect = () => {
   reconnectAttempts += 1;

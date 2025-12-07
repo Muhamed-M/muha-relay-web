@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { format, isSameMinute, isToday, isYesterday } from 'date-fns';
-import { getWebSocket } from '~/utils/websocket';
+import { getWebSocket, addMessageHandler } from '~/utils/websocket';
 import type { Message } from '~/types';
 import { playIncomingMessageSound, playSentMessageSound } from '~/utils/sounds';
 import messageReceiptService from '~/services/messageReceiptService';
@@ -10,6 +10,9 @@ const conversationsStore = useConversationsStore();
 const user = authStore.user;
 const socket = getWebSocket();
 const { showNotification } = useNotifications();
+
+// Store cleanup function for message handler
+let removeHandler: (() => void) | null = null;
 
 definePageMeta({
   layout: 'blank',
@@ -48,6 +51,48 @@ const onlineMembersCount = computed(() => {
   return conversation.value?.members?.filter((m) => m.user?.activityStatus === 'online').length;
 });
 
+// Handler for WebSocket messages in this conversation
+const handleWebSocketMessage = async ({ data }: MessageEvent) => {
+  const messageObj = JSON.parse(data);
+
+  switch (messageObj.type) {
+    case 'message':
+      // Only process messages for this conversation
+      if (messageObj.conversationId !== conversationId.value) return;
+
+      // update state
+      messages.value.push(messageObj);
+      playIncomingMessageSound();
+      showNotification('New message in Muha Relay', messageObj.content);
+
+      // scroll to last message
+      await nextTick();
+      scrollToLastMessage();
+      await markMessagesAsRead();
+      break;
+    case 'user-activity':
+      conversation.value?.members?.forEach((m) => {
+        if (m.user?.id === messageObj.userId && m.user?.activityStatus) {
+          m.user.activityStatus = messageObj.activityStatus;
+        }
+      });
+      break;
+    case 'user-typing':
+      // Only process typing for this conversation
+      if (messageObj.conversationId && messageObj.conversationId !== conversationId.value) return;
+
+      typingUsers.value.add(messageObj.username);
+
+      // Scroll typing indicator in the view
+      await nextTick();
+      if (chatContainer.value) chatContainer.value.scrollTop = chatContainer.value.scrollHeight;
+      break;
+    case 'user-stopped-typing':
+      typingUsers.value.delete(messageObj.username);
+      break;
+  }
+};
+
 onMounted(async () => {
   conversationsStore.getConversation(conversationId.value, user?.id);
   await getMessages();
@@ -58,48 +103,23 @@ onMounted(async () => {
 
   if (!socket) return;
 
+  // IMPORTANT: Register message handler BEFORE sending join message
+  // This prevents race conditions where messages arrive before handler is set up
+  removeHandler = addMessageHandler(handleWebSocketMessage);
+
+  // Now send the join message
   socket.send(JSON.stringify({ type: 'join', conversationId: conversationId.value }));
-
-  socket.onmessage = async ({ data }) => {
-    const messageObj = JSON.parse(data);
-
-    switch (messageObj.type) {
-      case 'message':
-        // update state
-        messages.value.push(messageObj);
-        playIncomingMessageSound();
-        showNotification('New message in Muha Relay', messageObj.content);
-
-        // scroll to last message
-        await nextTick();
-        scrollToLastMessage();
-        await markMessagesAsRead();
-        break;
-      case 'user-activity':
-        conversation.value?.members?.forEach((m) => {
-          if (m.user?.id === messageObj.userId && m.user?.activityStatus) {
-            m.user.activityStatus = messageObj.activityStatus;
-          }
-        });
-        break;
-      case 'user-typing':
-        typingUsers.value.add(messageObj.username);
-
-        // Scroll typing indicator in the view
-        await nextTick();
-        if (chatContainer.value) chatContainer.value.scrollTop = chatContainer.value.scrollHeight;
-        break;
-      case 'user-stopped-typing':
-        typingUsers.value.delete(messageObj.username);
-        break;
-    }
-  };
 });
 
 onBeforeUnmount(() => {
+  // Clean up the message handler properly
+  if (removeHandler) {
+    removeHandler();
+    removeHandler = null;
+  }
+
   if (socket) {
     socket.send(JSON.stringify({ type: 'left', conversationId: 0 }));
-    socket.onmessage = null;
   }
 
   clearTimeout(typingTimeout);

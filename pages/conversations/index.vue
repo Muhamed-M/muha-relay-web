@@ -1,57 +1,65 @@
 <script setup lang="ts">
-import { getWebSocket } from '~/utils/websocket';
+import { getWebSocket, addMessageHandler } from '~/utils/websocket';
 const authStore = useAuthStore();
 const conversationsStore = useConversationsStore();
 const socket = getWebSocket();
 
 const { loading, conversations } = storeToRefs(conversationsStore);
 
+// Store cleanup function for message handler
+let removeHandler: (() => void) | null = null;
+
+const handleWebSocketMessage = ({ data }: MessageEvent) => {
+  const messageObj = JSON.parse(data);
+
+  // If the message is for a specific conversation update
+  if (messageObj.type === 'conversation-update' && messageObj.senderId !== authStore.user?.id) {
+    // Update conversation list with the new message data
+    const conversationIndex = conversations.value.findIndex((c) => c.id === messageObj.conversationId);
+    if (conversationIndex !== -1) {
+      // Update last message content and timestamp in the conversation list
+      conversations.value[conversationIndex].lastMessageContent = messageObj.lastMessageContent;
+      conversations.value[conversationIndex].lastMessageAt = messageObj.lastMessageAt;
+      if (conversations.value[conversationIndex]._count) {
+        conversations.value[conversationIndex]._count.messages += 1;
+      }
+
+      // Remove the conversation from its current position
+      const updatedConversation = conversations.value.splice(conversationIndex, 1)[0];
+
+      // Add the conversation to the beginning of the array
+      conversations.value.unshift(updatedConversation);
+    }
+  } else if (messageObj.type === 'user-activity') {
+    // Update user activity status in the conversation list
+    const conversationIndex = conversations.value.findIndex(
+      (c) => c.members?.some((m) => m.user?.id === messageObj.userId) && !c.isGroup
+    ); // Find the conversation where the user is a member and it's not a group
+
+    if (conversationIndex !== -1) {
+      conversations.value[conversationIndex].members?.forEach((m) => {
+        if (m.user?.id === messageObj.userId && m.user?.activityStatus) {
+          m.user.activityStatus = messageObj.activityStatus;
+        }
+      });
+    }
+  }
+};
+
 onMounted(async () => {
   await conversationsStore.fetchConversations(authStore?.user?.id);
 
   if (!socket) return;
 
-  socket.onmessage = async ({ data }) => {
-    const messageObj = JSON.parse(data);
-
-    // If the message is for a specific conversation update
-    if (messageObj.type === 'conversation-update' && messageObj.senderId !== authStore.user?.id) {
-      // Update conversation list with the new message data
-      const conversationIndex = conversations.value.findIndex((c) => c.id === messageObj.conversationId);
-      if (conversationIndex !== -1) {
-        // Update last message content and timestamp in the conversation list
-        conversations.value[conversationIndex].lastMessageContent = messageObj.lastMessageContent;
-        conversations.value[conversationIndex].lastMessageAt = messageObj.lastMessageAt;
-        if (conversations.value[conversationIndex]._count) {
-          conversations.value[conversationIndex]._count.messages += 1;
-        }
-
-        // Remove the conversation from its current position
-        const updatedConversation = conversations.value.splice(conversationIndex, 1)[0];
-
-        // Add the conversation to the beginning of the array
-        conversations.value.unshift(updatedConversation);
-      }
-    } else if (messageObj.type === 'user-activity') {
-      // Update user activity status in the conversation list
-      const conversationIndex = conversations.value.findIndex(
-        (c) => c.members?.some((m) => m.user?.id === messageObj.userId) && !c.isGroup
-      ); // Find the conversation where the user is a member and it's not a group
-
-      if (conversationIndex !== -1) {
-        conversations.value[conversationIndex].members?.forEach((m) => {
-          if (m.user?.id === messageObj.userId && m.user?.activityStatus) {
-            m.user.activityStatus = messageObj.activityStatus;
-          }
-        });
-      }
-    }
-  };
+  // Register message handler using the new pattern
+  removeHandler = addMessageHandler(handleWebSocketMessage);
 });
 
 onBeforeUnmount(() => {
-  if (socket) {
-    socket.onmessage = null;
+  // Clean up the message handler properly
+  if (removeHandler) {
+    removeHandler();
+    removeHandler = null;
   }
 });
 </script>
