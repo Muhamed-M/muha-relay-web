@@ -15,7 +15,7 @@ class AuthService {
   }
 
   // Save user and token to cookie
-  saveUserToCookie(user: User, rememberMe: boolean = false): void {
+  saveUserToCookie(user: User, rememberMe: boolean = true): void {
     const maxAge = rememberMe ? 60 * 60 * 24 * 7 : undefined; // 7 days in seconds, or session cookie
     const userCookie = useCookie('user', { maxAge });
 

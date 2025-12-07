@@ -3,16 +3,25 @@ import { getWebSocket } from '~/utils/websocket';
 const authStore = useAuthStore();
 const { user } = storeToRefs(authStore);
 const socket = getWebSocket();
-// const colorMode = useColorMode();
 
-// const isDark = computed({
-//   get() {
-//     return colorMode.value === 'dark';
-//   },
-//   set() {
-//     colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark';
-//   },
-// });
+const colorMode = useColorMode();
+const isDark = computed({
+  get() {
+    return colorMode.value === 'dark';
+  },
+  set() {
+    colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark';
+  },
+});
+
+const { isSupported, isGranted, isPWA, enableNotifications } = usePushNotifications();
+const notifLoading = ref(false);
+
+async function handleEnableNotifications() {
+  notifLoading.value = true;
+  await enableNotifications();
+  notifLoading.value = false;
+}
 
 const signOut = () => {
   authStore.signOut();
@@ -22,26 +31,43 @@ const signOut = () => {
 </script>
 
 <template>
-  <div class="py-5 px-6 space-y-3">
+  <div class="py-5 px-6 space-y-6">
     <div class="text-center space-y-3">
       <UAvatar size="3xl" :alt="user?.username" />
       <div>
         <h2 class="text-lg font-semibold">{{ user?.firstName }}</h2>
-        <h3 class="text-slate-700">{{ user?.username }}</h3>
+        <h3 class="text-slate-700 dark:text-slate-300">{{ user?.username }}</h3>
       </div>
     </div>
 
     <ul class="space-y-4">
-      <!-- <li class="flex items-center justify-between text-lg">
+      <li v-if="isSupported" class="flex items-center justify-between text-lg">
         <div class="flex items-center gap-3">
-          <UIcon v-if="isDark" name="i-heroicons-moon-20-solid" class="w-6 h-6"></UIcon>
-          <UIcon v-else name="i-heroicons-sun-20-solid" class="w-6 h-6"></UIcon>
-          <span>Theme</span>
+          <UIcon name="i-heroicons-bell-20-solid" class="w-6 h-6" />
+          <span>Notifications</span>
+        </div>
+        <div v-if="isGranted" class="flex items-center gap-2 text-green-600">
+          <UIcon name="i-heroicons-check-circle" class="w-5 h-5" />
+          <span class="text-sm">Enabled</span>
+        </div>
+        <UButton v-else size="xs" :loading="notifLoading" @click="handleEnableNotifications"> Enable </UButton>
+      </li>
+
+      <li v-if="isSupported && !isGranted && !isPWA" class="text-xs text-amber-600 pl-9">
+        For iOS, install this app to your home screen first.
+      </li>
+
+      <li class="flex items-center justify-between text-lg">
+        <div class="flex items-center gap-3">
+          <UIcon v-if="isDark" name="i-heroicons-moon-20-solid" class="w-6 h-6" />
+          <UIcon v-else name="i-heroicons-sun-20-solid" class="w-6 h-6" />
+          <span>Dark Mode</span>
         </div>
         <UToggle v-model="isDark" />
-      </li> -->
-      <li class="flex items-center gap-3 text-lg" @click="signOut()">
-        <UIcon name="i-heroicons-arrow-left-start-on-rectangle" class="w-6 h-6"></UIcon>
+      </li>
+
+      <li class="flex items-center gap-3 text-lg cursor-pointer" @click="signOut()">
+        <UIcon name="i-heroicons-arrow-left-start-on-rectangle" class="w-6 h-6" />
         <span>Logout</span>
       </li>
     </ul>
