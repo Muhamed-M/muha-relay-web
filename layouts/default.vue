@@ -1,15 +1,22 @@
 <script setup lang="ts">
 const isOpen = ref(false);
+const route = useRoute();
 
 // Initialize push notifications (registers SW and restores subscription if granted)
 usePushNotifications();
+
+const pageTitle = computed(() => {
+  const path = route.path;
+  if (path === '/settings') return 'Settings';
+  if (path === '/conversations') return 'Conversations';
+});
 </script>
 
 <template>
   <div class="min-h-screen">
     <div class="header-safe sticky top-0 flex items-center gap-4 px-4 py-2 shadow-md z-20 bg-white dark:bg-gray-900">
       <img src="/favicon.svg" alt="logo" width="50px" />
-      <h2 class="font-semibold text-lg">Conversations</h2>
+      <h2 class="font-semibold text-lg">{{ pageTitle }}</h2>
     </div>
 
     <main>
