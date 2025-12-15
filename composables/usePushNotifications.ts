@@ -18,12 +18,12 @@ export function usePushNotifications() {
   };
 
   const registerServiceWorker = async (): Promise<ServiceWorkerRegistration | null> => {
-    if (!isSupported.value) return null;
     try {
       const registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
       await navigator.serviceWorker.ready;
       return registration;
-    } catch {
+    } catch (err) {
+      console.error('[Push] Failed to register service worker:', err);
       return null;
     }
   };
@@ -32,48 +32,81 @@ export function usePushNotifications() {
     try {
       const registration = await navigator.serviceWorker.ready;
       return registration.pushManager.getSubscription();
-    } catch {
+    } catch (err) {
+      console.error('[Push] Failed to get existing subscription:', err);
       return null;
     }
   };
 
-  const sendSubscriptionToServer = async (sub: PushSubscription): Promise<void> => {
-    const subJson = sub.toJSON();
-    await axios.post('/push/subscribe', {
-      endpoint: subJson.endpoint,
-      keys: {
-        p256dh: subJson.keys?.p256dh,
-        auth: subJson.keys?.auth,
-      },
-    });
+  const sendSubscriptionToServer = async (sub: PushSubscription): Promise<boolean> => {
+    try {
+      const subJson = sub.toJSON();
+      await axios.post('/push/subscribe', {
+        endpoint: subJson.endpoint,
+        keys: {
+          p256dh: subJson.keys?.p256dh,
+          auth: subJson.keys?.auth,
+        },
+      });
+      console.log('[Push] Subscription sent to server successfully');
+      return true;
+    } catch (err) {
+      console.error('[Push] Failed to send subscription to server:', err);
+      return false;
+    }
   };
 
   const subscribeUser = async (registration: ServiceWorkerRegistration): Promise<PushSubscription | null> => {
     try {
+      const vapidKey = config.public.vapidPublicKey;
+      if (!vapidKey) {
+        console.error('[Push] VAPID public key is not configured');
+        return null;
+      }
+
       const sub = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(config.public.vapidPublicKey),
+        applicationServerKey: urlBase64ToUint8Array(vapidKey),
       });
 
-      await sendSubscriptionToServer(sub);
+      const sent = await sendSubscriptionToServer(sub);
+      if (!sent) {
+        console.error('[Push] Subscription created but failed to save to server');
+      }
       return sub;
-    } catch {
+    } catch (err) {
+      console.error('[Push] Failed to subscribe user:', err);
       return null;
     }
   };
 
   const enableNotifications = async (): Promise<boolean> => {
-    if (!isSupported.value) return false;
+    // Check support on demand (in case onMounted hasn't run yet)
+    checkSupport();
 
-    if (Notification.permission === 'denied') return false;
+    if (!isSupported.value) {
+      console.warn('[Push] Push notifications not supported');
+      return false;
+    }
+
+    if (Notification.permission === 'denied') {
+      console.warn('[Push] Notification permission denied');
+      return false;
+    }
 
     const permission = await Notification.requestPermission();
     isGranted.value = permission === 'granted';
 
-    if (!isGranted.value) return false;
+    if (!isGranted.value) {
+      console.warn('[Push] Notification permission not granted');
+      return false;
+    }
 
     const registration = await registerServiceWorker();
-    if (!registration) return false;
+    if (!registration) {
+      console.error('[Push] Service worker registration failed');
+      return false;
+    }
 
     let sub = await getExistingSubscription();
     if (!sub) {
@@ -112,19 +145,24 @@ export function usePushNotifications() {
     };
   };
 
-  onMounted(() => {
+  onMounted(async () => {
     checkSupport();
+    console.log('[Push] onMounted - isSupported:', isSupported.value, 'isGranted:', isGranted.value);
+
     if (isSupported.value && isGranted.value) {
       // Auto-register service worker and restore subscription on mount
-      registerServiceWorker().then(() => {
-        getExistingSubscription().then((sub) => {
-          subscription.value = sub;
-          // Re-send subscription to server on page load
-          if (sub) {
-            sendSubscriptionToServer(sub).catch(() => {});
-          }
-        });
-      });
+      const registration = await registerServiceWorker();
+      if (registration) {
+        const sub = await getExistingSubscription();
+        subscription.value = sub;
+        console.log('[Push] Existing subscription found:', !!sub);
+
+        // Re-send subscription to server on page load (handles server restarts)
+        if (sub) {
+          const sent = await sendSubscriptionToServer(sub);
+          console.log('[Push] Auto-sync to server:', sent ? 'success' : 'failed');
+        }
+      }
     }
   });
 

@@ -14,12 +14,18 @@ const isDark = computed({
   },
 });
 
-const { isSupported, isGranted, isPWA, enableNotifications } = usePushNotifications();
+const { isSupported, isGranted, isPWA, subscription, enableNotifications } = usePushNotifications();
 const notifLoading = ref(false);
+
+// Show as fully enabled only if permission granted AND subscription exists
+const isFullyEnabled = computed(() => isGranted.value && subscription.value !== null);
 
 async function handleEnableNotifications() {
   notifLoading.value = true;
-  await enableNotifications();
+  const success = await enableNotifications();
+  if (!success) {
+    console.error('Failed to enable notifications');
+  }
   notifLoading.value = false;
 }
 
@@ -46,14 +52,14 @@ const signOut = () => {
           <UIcon name="i-heroicons-bell-20-solid" class="w-6 h-6" />
           <span>Notifications</span>
         </div>
-        <div v-if="isGranted" class="flex items-center gap-2 text-green-600">
+        <div v-if="isFullyEnabled" class="flex items-center gap-2 text-green-600">
           <UIcon name="i-heroicons-check-circle" class="w-5 h-5" />
           <span class="text-sm">Enabled</span>
         </div>
         <UButton v-else size="xs" :loading="notifLoading" @click="handleEnableNotifications"> Enable </UButton>
       </li>
 
-      <li v-if="isSupported && !isGranted && !isPWA" class="text-xs text-amber-600 pl-9">
+      <li v-if="isSupported && !isFullyEnabled && !isPWA" class="text-xs text-amber-600 pl-9">
         For iOS, install this app to your home screen first.
       </li>
 
