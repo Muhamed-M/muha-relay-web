@@ -9,7 +9,7 @@ const authStore = useAuthStore();
 const conversationsStore = useConversationsStore();
 const user = authStore.user;
 const socket = getWebSocket();
-const { showNotification } = useNotifications();
+const { showLocalNotification } = usePushNotifications();
 
 // Store cleanup function for message handler
 let removeHandler: (() => void) | null = null;
@@ -106,7 +106,7 @@ const handleWebSocketMessage = async ({ data }: MessageEvent) => {
       // update state
       messages.value.push(messageObj);
       playIncomingMessageSound();
-      showNotification('New message in Muha Relay', messageObj.content);
+      showLocalNotification('New message in Muha Relay', messageObj.content);
 
       // scroll to last message
       await nextTick();

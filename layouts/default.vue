@@ -1,10 +1,8 @@
 <script setup lang="ts">
-const { requestNotificationPermission } = useNotifications();
 const isOpen = ref(false);
 
-onMounted(() => {
-  requestNotificationPermission();
-});
+// Initialize push notifications (registers SW and restores subscription if granted)
+usePushNotifications();
 </script>
 
 <template>
