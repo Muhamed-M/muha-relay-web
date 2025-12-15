@@ -54,7 +54,12 @@ const formatDate = (date: Date) => {
         class="mr-3"
       />
       <div>
-        <h3 class="text-lg font-semibold">{{ conversationTitle }}</h3>
+        <h3
+          class="text-lg font-semibold"
+          :class="[conversation?._count?.messages ?? 0 > 0 ? 'text-black font-bold' : 'text-gray-500']"
+        >
+          {{ conversationTitle }}
+        </h3>
         <p
           v-if="conversation?.lastMessageContent"
           class="text-sm"
