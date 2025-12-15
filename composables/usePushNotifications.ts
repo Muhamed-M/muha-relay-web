@@ -8,6 +8,9 @@ export function usePushNotifications() {
   const subscription = ref<PushSubscription | null>(null);
   const isPWA = ref(false);
 
+  console.log('VAPID PUBLIC KEY', config.public.vapidPublicKey);
+  console.log('VAPID PRIVATE KEY  ', config.vapidPrivateKey);
+
   const checkSupport = () => {
     if (import.meta.server) return;
 
